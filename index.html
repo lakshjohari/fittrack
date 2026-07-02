@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>FitTrack — Home Workout</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1c1c1a" media="(prefers-color-scheme: dark)">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FitTrack">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#fff;--bg2:#f6f5f1;--bg3:#eeedea;
+  --text:#1a1a18;--text2:#6b6b67;--text3:#9b9b97;
+  --border:rgba(0,0,0,0.10);--border2:rgba(0,0,0,0.2);
+  --green:#1D9E75;--green-l:#E1F5EE;--green-d:#178560;
+  --red:#E24B4A;
+  --accent:#3B82F6;--accent-l:#E7F0FE;
+  --sel:#F59E0B;
+  --fig:#5f6b7a;--fig2:#465061;
+  --r-md:9px;--r-lg:14px;
+  --shadow:0 1px 2px rgba(0,0,0,.04),0 2px 6px rgba(0,0,0,.05);
+  --shadow-md:0 4px 14px rgba(0,0,0,.09);
+}
+@media(prefers-color-scheme:dark){
+  :root{--bg:#1c1c1a;--bg2:#252521;--bg3:#2e2e2b;--text:#f0f0ec;--text2:#9a9a96;--text3:#686865;--border:rgba(255,255,255,0.09);--border2:rgba(255,255,255,0.18);--green-l:#04342C;--accent:#5B9BFF;--accent-l:#16243B;--sel:#FBBF24;--fig:#9aa7b6;--fig2:#717f90;--shadow:0 1px 2px rgba(0,0,0,.2),0 2px 8px rgba(0,0,0,.3);--shadow-md:0 6px 20px rgba(0,0,0,.45)}
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg3);color:var(--text);min-height:100vh;font-size:15px;line-height:1.5}
+.shell{max-width:720px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
+.shell.wide{max-width:1180px}
+/* Wide / desktop multi-column layouts (only when wide mode is on) */
+.shell.wide #workoutPane{display:grid;grid-template-columns:repeat(2,1fr);gap:.7rem;align-items:start}
+.shell.wide #workoutPane>.slabel,.shell.wide #workoutPane>textarea,.shell.wide #workoutPane>.wk-planrow{grid-column:1/-1}
+.shell.wide #workoutPane>.excard{margin-bottom:0}
+.shell.wide #pane-weight.active{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;align-items:start}
+.shell.wide #pane-weight.active>.card:first-child,.shell.wide #pane-weight.active>.stats-g{grid-column:1/-1}
+.shell.wide #pane-weight.active>.card{margin-bottom:0}
+.shell.wide #pane-progress.active{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;align-items:start}
+.shell.wide #pane-progress.active>.stats-g,.shell.wide #pane-progress.active>#calCard{grid-column:1/-1}
+.shell.wide #pane-progress.active>.card{margin-bottom:0}
+.layout-toggle{background:var(--bg2);border:0.5px solid var(--border);border-radius:6px;color:var(--text2);width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px}
+.layout-toggle:hover{background:var(--border);color:var(--text)}
+.shell.wide .layout-toggle{color:var(--green);border-color:var(--green)}
+.data-btn{display:flex;align-items:center;gap:6px;background:var(--green);color:#fff;border:none;border-radius:var(--r-md);padding:11px 16px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+.data-btn:hover{filter:brightness(1.08)}
+.data-btn.ghost{background:var(--bg2);color:var(--text);border:0.5px solid var(--border)}
+.data-btn.ghost:hover{background:var(--border);filter:none}
+.topbar{background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:saturate(1.4) blur(10px);border-bottom:0.5px solid var(--border);padding:0 1.25rem;position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;height:56px}
+.app-name{font-size:17px;font-weight:500}
+.app-date{font-size:12px;color:var(--text2)}
+.nav{background:var(--bg);border-bottom:0.5px solid var(--border);display:flex}
+.nav-btn{flex:1;padding:14px 0;font-size:14.5px;color:var(--text2);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;transition:color .15s,background .15s}
+.nav-btn:hover{color:var(--text)}
+.nav-btn.active{color:var(--green);border-bottom-color:var(--green);font-weight:600}
+.tab{display:none;padding:1.1rem;flex:1}
+.tab.active{display:block}
+.card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--r-lg);padding:1rem 1.25rem;margin-bottom:.75rem;box-shadow:var(--shadow)}
+.day-row{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:1rem;scrollbar-width:none}
+.day-row::-webkit-scrollbar{display:none}
+.dpill{flex-shrink:0;padding:7px 14px;border-radius:20px;font-size:13.5px;cursor:pointer;border:0.5px solid var(--border);background:var(--bg);color:var(--text2);font-family:inherit;transition:all .15s;position:relative;line-height:1.3;text-align:center}
+.dpill.active{background:var(--green);border-color:var(--green);color:#fff;font-weight:500}
+.dpill.done::after{content:'✓';position:absolute;top:-5px;right:-4px;background:var(--green);color:#fff;border-radius:50%;width:14px;height:14px;font-size:9px;display:flex;align-items:center;justify-content:center;line-height:14px}
+.dpill.restday{opacity:.45}
+.prog-wrap{height:5px;background:var(--bg2);border-radius:3px;overflow:hidden;margin:10px 0 4px}
+.prog-fill{height:100%;background:var(--green);border-radius:3px;transition:width .3s}
+.prog-label{font-size:13.5px;color:var(--text2);margin-bottom:.9rem}
+
+/* Exercise card */
+.excard{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--r-lg);margin-bottom:.65rem;overflow:hidden;box-shadow:var(--shadow);transition:box-shadow .18s,border-color .18s,transform .18s}
+.excard:hover{box-shadow:var(--shadow-md);border-color:var(--border2)}
+.excard:has(.exbody.open){border-color:color-mix(in srgb,var(--green) 45%,var(--border));box-shadow:var(--shadow-md)}
+.exhead{display:flex;align-items:stretch;cursor:pointer;user-select:none}
+.exhead:hover .ex-name{color:var(--green)}
+.ex-anims{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px;background:var(--bg2);border-right:0.5px solid var(--border);min-width:164px;width:164px;flex-shrink:0;justify-content:center}
+.exfig{width:144px;height:144px;display:block;object-fit:contain;border-radius:var(--r-md);background:#fff}
+.exfig-missing{display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:38px;background:var(--bg)}
+.view-lbl{font-size:9px;color:var(--text3);letter-spacing:.05em;text-transform:uppercase;line-height:1}
+.howto-hd{font-size:14px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:5px;margin:2px 0 9px}
+.howto{margin:0 0 14px;padding-left:24px;display:flex;flex-direction:column;gap:8px}
+.howto li{font-size:15.5px;font-weight:500;color:var(--text);line-height:1.5}
+.ex-info{flex:1;padding:13px 16px;display:flex;flex-direction:column;justify-content:center;min-width:0}
+.ex-swaprow{display:flex;align-items:center;gap:9px;margin:0 0 13px;flex-wrap:wrap}
+.ex-swaplbl{font-size:13px;font-weight:600;color:var(--text2);display:flex;align-items:center;gap:5px}
+.ex-swapsel{max-width:230px}
+.ex-name{font-size:16px;font-weight:600;margin-bottom:3px}
+.ex-meta{font-size:12.5px;color:var(--text2);margin-bottom:3px}
+.ex-tip{font-size:12.5px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-style:italic}
+.ex-chev{display:flex;align-items:center;padding:0 12px;color:var(--text3);font-size:20px;transition:transform .2s}
+.ex-chev.open{transform:rotate(180deg)}
+.exbody{display:none;padding:10px 13px;border-top:0.5px solid var(--border)}
+.exbody.open{display:block}
+.yt-btn{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;color:var(--text2);background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--r-md);padding:6px 12px;cursor:pointer;text-decoration:none;margin-bottom:10px;font-family:inherit}
+.yt-btn:hover{border-color:var(--green);color:var(--green)}
+.sets-hd{display:grid;grid-template-columns:26px 1fr 1fr 1fr 30px;gap:5px;margin-bottom:5px;padding:0 2px}
+.sets-hd span{font-size:11px;color:var(--text2);text-align:center}
+.setrow{display:grid;grid-template-columns:26px 1fr 1fr 1fr 30px;gap:5px;align-items:center;margin-bottom:5px}
+.sn{font-size:12.5px;color:var(--text3);text-align:center}
+.sinput{border:0.5px solid var(--border);border-radius:var(--r-md);padding:7px 5px;font-size:13px;text-align:center;background:var(--bg2);color:var(--text);width:100%;font-family:inherit}
+.sinput:focus{outline:none;border-color:var(--green)}
+.bw-add{width:100%;border:0.5px dashed var(--border2);border-radius:var(--r-md);background:var(--bg2);color:var(--text2);font-size:12px;font-weight:500;padding:6px 4px;cursor:pointer;font-family:inherit;line-height:1;display:flex;align-items:center;justify-content:center;gap:3px}
+.bw-add:hover{border-color:var(--green);color:var(--green)}
+.bw-add i{font-size:12px}
+.scheck{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--border2);cursor:pointer;display:flex;align-items:center;justify-content:center;background:none;font-size:0;margin:0 auto;transition:all .15s}
+.scheck.done{background:var(--green);border-color:var(--green);font-size:12px;color:#fff}
+.rest-hint{font-size:10px;color:var(--text3);margin-top:7px;display:flex;align-items:center;gap:4px}
+.done-btn{width:100%;padding:13px;border-radius:var(--r-md);border:none;background:linear-gradient(180deg,var(--green),var(--green-d));color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:.6rem;box-shadow:var(--shadow);transition:filter .15s,transform .1s}
+.done-btn:hover{filter:brightness(1.06)}
+.done-btn:active{transform:translateY(1px)}
+.done-btn:disabled{opacity:.35;cursor:default}
+.rest-view{text-align:center;padding:3rem 1rem;color:var(--text2)}
+.rest-icon{font-size:44px;display:block;margin-bottom:1rem;color:var(--text3)}
+.rest-view h3{font-size:16px;color:var(--text);margin-bottom:.5rem}
+.slabel{font-size:11.5px;font-weight:600;color:var(--text2);letter-spacing:.06em;text-transform:uppercase;margin:1.1rem 0 .65rem}
+.streak-row{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:1rem}
+.sdot{width:36px;height:36px;border-radius:50%;background:var(--bg2);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:var(--text2)}
+.sdot.done{background:var(--green);border-color:var(--green);color:#fff}
+.sdot.restday{opacity:.35}
+.wform{display:flex;gap:9px;align-items:flex-end;flex-wrap:wrap;margin-bottom:1.1rem}
+.fg{display:flex;flex-direction:column;gap:4px;flex:1;min-width:90px}
+.flabel{font-size:13px;color:var(--text2)}
+.finput{border:0.5px solid var(--border);border-radius:var(--r-md);padding:8px 11px;font-size:14px;background:var(--bg2);color:var(--text);font-family:inherit;width:100%}
+.finput:focus{outline:none;border-color:var(--green)}
+.btn-g{padding:8px 18px;border-radius:var(--r-md);border:none;background:var(--green);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;height:42px}
+.stats-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:9px;margin-bottom:1.1rem}
+.scard{background:var(--bg2);border-radius:var(--r-md);padding:15px 17px}
+.scard-lbl{font-size:12.5px;color:var(--text2);margin-bottom:4px}
+.scard-val{font-size:26px;font-weight:600}
+.scard-unit{font-size:13.5px;color:var(--text2)}
+.log-row{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:0.5px solid var(--border);font-size:14.5px}
+.log-row:last-child{border-bottom:none}
+.log-date{color:var(--text2);font-size:13px}
+.log-w{font-weight:600}
+.delta{font-size:12.5px;margin-left:7px}
+.delta.up{color:var(--red)}
+.delta.dn{color:var(--green)}
+.chart-wrap{position:relative;height:200px;margin-bottom:.5rem}
+.heatmap{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:1rem;width:100%}
+.hcell{height:48px;border-radius:7px;background:var(--bg2);border:0.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:500;color:var(--text3)}
+.hcell.done{background:var(--green);border-color:var(--green);color:#fff}
+.hcell.restday{opacity:.4}
+.cal-nav{background:var(--bg2);border:0.5px solid var(--border);border-radius:6px;color:var(--text);width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px}
+.cal-nav:hover{background:var(--border)}
+/* heatmap day labels (kept simple, spaced) */
+.cal-dow{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:6px}
+.cal-dow span{font-size:11px;font-weight:500;text-align:center;color:var(--text3)}
+/* traditional month calendar: grid-lined cells, corner day numbers */
+.cal-wd{display:grid;grid-template-columns:repeat(7,1fr)}
+.cal-wd span{font-size:11.5px;font-weight:600;text-align:center;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;padding-bottom:6px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:0;border:0.5px solid var(--border);border-radius:10px;overflow:hidden;background:var(--border)}
+.ccell{min-height:118px;background:var(--bg);border:none;display:flex;flex-direction:column;align-items:stretch;padding:7px 8px 8px;font-size:13px;color:var(--text);cursor:pointer;position:relative;transition:background .12s;box-shadow:0 0 0 0.5px var(--border);overflow:hidden}
+.ccell:hover{background:var(--bg2)}
+.ccell.empty{background:var(--bg3);cursor:default}
+.ccell.empty:hover{background:var(--bg3)}
+.ctop{display:flex;align-items:center;justify-content:space-between;min-height:28px;margin-bottom:3px}
+.cnum{display:flex;align-items:center;justify-content:center;min-width:28px;height:28px;padding:0 4px;border-radius:14px;font-size:17px;font-weight:600;line-height:1;flex-shrink:0}
+.ccell.has .cnum{font-weight:700}
+.ccell.today .cnum{background:var(--accent);color:#fff;font-weight:700}
+.cmark{display:flex;gap:3px}
+.cmark i{width:6px;height:6px;border-radius:50%;background:var(--accent);display:block}
+.cmark i.dn{background:var(--green)}
+.ctype{display:inline-flex;align-items:center;gap:5px;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin:1px 0 5px;line-height:1;color:var(--t,var(--green))}
+.ctype::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--t,var(--green));flex-shrink:0}
+.ccell.rest .ctype{color:var(--text3);--t:var(--text3)}
+.ccell.t-push{--t:#1D9E75}.ccell.t-pull{--t:#3B82F6}.ccell.t-legs{--t:#E08C2F}
+.ccell.t-upper{--t:#8B5CF6}.ccell.t-core{--t:#D6457E}
+.cexs{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:3px;overflow:hidden}
+.cexs li{font-size:9.5px;line-height:1.3;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-left:9px;position:relative}
+.cexs li::before{content:'';position:absolute;left:0;top:5px;width:4px;height:4px;border-radius:50%;background:var(--t,var(--text3));opacity:.7}
+.cexs li.cmore{color:var(--accent);opacity:.85;font-weight:600;padding-left:9px}
+.cexs li.cmore::before{display:none}
+.crest{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:var(--text3)}
+.cz{width:26px;height:26px;color:var(--accent);opacity:.8}
+.crest span{font-size:9px;letter-spacing:.06em;text-transform:uppercase;opacity:.7}
+.ccell.sel{background:var(--sel-l,rgba(245,158,11,.12));box-shadow:inset 0 0 0 2px var(--sel)}
+.ccell.today.sel{box-shadow:inset 0 0 0 2px var(--sel)}
+.cd-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:14px;padding-top:4px}
+.cd-date{font-size:14.5px;font-weight:600;color:var(--text2);letter-spacing:.01em}
+.cd-title{font-size:24px;font-weight:700;line-height:1.1;margin:2px 0 3px}
+.cd-tag{font-size:11px;font-weight:600;color:var(--accent);background:var(--accent-l);padding:2px 7px;border-radius:20px;vertical-align:middle;margin-left:4px}
+.cd-focus{font-size:13.5px;color:var(--text2)}
+.cd-future{font-size:11px;color:var(--text3);margin-bottom:10px}
+.cd-schedrow{display:flex;gap:9px;margin:0 0 9px}
+.cd-field{flex:1;display:flex;flex-direction:column;gap:4px}
+.cd-field span{font-size:12.5px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.04em}
+.cd-field input{border:0.5px solid var(--border);border-radius:var(--r-md);padding:8px 10px;font-size:14px;background:var(--bg2);color:var(--text);font-family:inherit;width:100%}
+.cd-field input:focus{outline:none;border-color:var(--green)}
+.cd-planrow{display:flex;align-items:center;gap:9px;margin:0 0 16px;padding:10px 12px;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--r-md)}
+.wk-planrow{margin-bottom:14px}
+.cd-planlbl{font-size:12.5px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.04em}
+.cd-plan{flex:1;border:0.5px solid var(--border);border-radius:var(--r-md);padding:8px 10px;font-size:14px;font-weight:500;background:var(--bg);color:var(--text);font-family:inherit;cursor:pointer}
+.cd-plan:focus{outline:none;border-color:var(--green)}
+.cd-resetplan{flex-shrink:0;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border:0.5px solid var(--border);border-radius:var(--r-md);background:var(--bg);color:var(--text2);cursor:pointer;font-size:16px}
+.cd-resetplan:hover{color:var(--green);border-color:var(--green)}
+.cd-exblock{margin-bottom:16px}
+.cd-exname{font-size:15px;font-weight:600;margin-bottom:7px;display:flex;flex-wrap:wrap;align-items:baseline;gap:8px}
+.cd-exmeta{font-size:12px;font-weight:400;color:var(--text3)}
+.cd-done{width:100%;padding:12px;border-radius:var(--r-md);border:0.5px solid var(--green);background:none;color:var(--green);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:4px;transition:all .15s}
+.cd-done:hover{background:var(--green-l)}
+.cd-done.on{background:var(--green);color:#fff}
+/* rest-day screen */
+.cd-rest{text-align:center;padding:6px 0 4px}
+.zzz-svg{width:130px;height:auto;margin:4px auto 2px;display:block}
+.cd-rest-msg{font-size:19px;font-weight:700;margin-top:2px}
+.cd-rest-sub{font-size:13.5px;color:var(--text2);margin:4px 0 18px}
+.cd-altlabel{font-size:13px;color:var(--text3);margin-bottom:8px}
+.cd-picker{display:flex;flex-wrap:wrap;gap:7px;justify-content:center}
+.pick-btn{font-size:13.5px;font-weight:600;padding:9px 16px;border-radius:20px;border:0.5px solid var(--border);background:var(--bg2);color:var(--text);cursor:pointer;font-family:inherit;transition:all .15s}
+.pick-btn:hover{border-color:var(--green);color:var(--green);background:var(--green-l)}
+.cd-revert{width:100%;margin-top:8px;padding:9px;border-radius:var(--r-md);border:none;background:none;color:var(--text2);font-size:12px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:5px}
+.cd-revert:hover{color:var(--text);background:var(--bg2)}
+.ccell.done .cnum{color:var(--green)}
+.cd-card{background:var(--bg2);border:0.5px solid var(--border);border-radius:8px;padding:12px}
+.cd-ex{font-size:13px;padding:6px 0;border-bottom:0.5px solid var(--border)}
+.cd-ex:last-child{border-bottom:0}
+.cd-set{font-size:11px;color:var(--text2);margin-left:10px}
+/* Measurements tab */
+.measfig{background:var(--bg2)}
+.meas-inrow{display:flex;align-items:center;gap:7px;align-self:center;flex-shrink:0;padding:0 16px}
+.meas-input{width:104px;max-width:none;padding:13px 12px;font-size:21px;font-weight:600;text-align:center}
+.meas-unit{font-size:15px;color:var(--text2)}
+.meas-empty{font-size:13px;color:var(--text3);text-align:center;padding:1.2rem 0}
+.meas-entry{padding:12px 0;border-bottom:0.5px solid var(--border)}
+.meas-entry:last-child{border-bottom:0}
+.meas-ehead{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px}
+.meas-ehead b{font-size:14px}
+.meas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:6px 14px}
+.meas-cell{display:flex;justify-content:space-between;gap:8px;font-size:13px}
+.meas-cl{color:var(--text2)}
+.meas-cv{font-weight:600;white-space:nowrap}
+.meas-del{background:none;border:none;cursor:pointer;color:var(--text3);font-size:17px;padding:2px;flex-shrink:0}
+.meas-del:hover{color:var(--red)}
+.shell.wide #measCards{display:grid;grid-template-columns:repeat(2,1fr);gap:.7rem;align-items:start}
+.shell.wide #measCards>.excard{margin-bottom:0}
+
+/* ===== App-feel polish (all sizes) ===== */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
+.topbar{padding-top:env(safe-area-inset-top);height:calc(56px + env(safe-area-inset-top))}
+button,select,input{touch-action:manipulation}
+.dpill:active,.pick-btn:active,.btn-g:active,.data-btn:active{transform:scale(.96)}
+.scheck:active{transform:scale(.88)}
+.excard,.card{transition:box-shadow .18s,border-color .18s}
+.app-name{letter-spacing:-.01em;font-weight:600}
+.scard{border:0.5px solid var(--border);box-shadow:var(--shadow)}
+.scard-val{letter-spacing:-.02em}
+
+/* ===== Phone layout (≤640px): bottom tab bar, tighter cards ===== */
+@media(max-width:640px){
+  .layout-toggle{display:none} /* wide mode is meaningless on a phone */
+  /* neutralize a saved wide-layout pref: single column always */
+  .shell.wide{max-width:720px}
+  .shell.wide #workoutPane,.shell.wide #measCards,.shell.wide #pane-weight.active,.shell.wide #pane-progress.active{display:block}
+  .nav{position:fixed;bottom:0;left:0;right:0;z-index:120;border-bottom:none;border-top:0.5px solid var(--border);background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:saturate(1.5) blur(16px);-webkit-backdrop-filter:saturate(1.5) blur(16px);padding-bottom:env(safe-area-inset-bottom)}
+  .nav-btn{flex-direction:column;gap:3px;padding:8px 0 6px;font-size:11px;font-weight:500;border-bottom:none;border-radius:12px;margin:4px 3px}
+  .nav-btn i{font-size:22px;line-height:1}
+  .nav-btn.active{border-bottom:none;background:var(--green-l);color:var(--green)}
+  .tab{padding:.85rem .85rem calc(86px + env(safe-area-inset-bottom))}
+  .topbar{padding-left:1rem;padding-right:1rem}
+  /* exercise cards: slimmer demo panel */
+  .ex-anims{min-width:118px;width:118px;padding:8px}
+  .exfig{width:102px;height:102px}
+  .ex-info{padding:11px 12px}
+  .ex-name{font-size:15px}
+  .howto li{font-size:14.5px}
+  .card{padding:.9rem 1rem}
+  /* day pills: comfier touch targets */
+  .dpill{padding:9px 15px;font-size:14px}
+  /* month calendar: denser phone cells — number + type only */
+  .ccell{min-height:64px;padding:5px 5px 6px}
+  .cnum{min-width:24px;height:24px;font-size:14px;border-radius:12px}
+  .ctop{min-height:24px;margin-bottom:2px}
+  .cexs{display:none}
+  .ctype{font-size:8px;margin:0}
+  .cz{width:18px;height:18px}
+  .crest span{display:none}
+  /* heatmap + streak fit */
+  .hcell{height:40px;font-size:12.5px}
+  .sdot{width:32px;height:32px;font-size:12px}
+  /* calendar detail: stack date/time fields comfortably */
+  .cd-title{font-size:21px}
+  .chart-wrap{height:180px}
+}
+/* standalone (installed) mode: a touch more app-like */
+@media(display-mode:standalone){
+  .topbar{background:var(--bg)}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+<div class="topbar">
+  <span class="app-name"><i class="ti ti-bolt" style="color:var(--green);font-size:18px;vertical-align:-2px" aria-hidden="true"></i> FitTrack</span>
+  <span style="display:flex;align-items:center;gap:12px">
+    <span class="app-date" id="topDate"></span>
+    <button class="layout-toggle" id="layoutToggle" onclick="toggleLayout()" title="Toggle wide / mobile layout" aria-label="Toggle layout width"><i class="ti ti-layout-sidebar" aria-hidden="true"></i></button>
+  </span>
+</div>
+<nav class="nav" role="tablist">
+  <button class="nav-btn active" onclick="switchTab('workout')" id="tab-workout"><i class="ti ti-barbell" aria-hidden="true"></i> Workout</button>
+  <button class="nav-btn" onclick="switchTab('weight')" id="tab-weight"><i class="ti ti-scale" aria-hidden="true"></i> Weight</button>
+  <button class="nav-btn" onclick="switchTab('measure')" id="tab-measure"><i class="ti ti-ruler-measure" aria-hidden="true"></i> Measure</button>
+  <button class="nav-btn" onclick="switchTab('progress')" id="tab-progress"><i class="ti ti-chart-line" aria-hidden="true"></i> Progress</button>
+</nav>
+
+<div class="tab active" id="pane-workout" role="tabpanel">
+  <div class="day-row" id="dayPills"></div>
+  <div class="prog-wrap"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+  <div class="prog-label" id="progLabel">0 of 0 sets done</div>
+  <div id="workoutPane"></div>
+  <button class="done-btn" id="doneBtn" onclick="markDone()">Mark workout complete</button>
+</div>
+
+<div class="tab" id="pane-weight" role="tabpanel">
+  <div class="card">
+    <div class="slabel" style="margin-top:0">Daily check-in</div>
+    <div class="wform">
+      <div class="fg"><label class="flabel" for="wi-date">Date</label><input class="finput" type="date" id="wi-date"></div>
+      <div class="fg" style="max-width:110px"><label class="flabel" for="wi-time">Time</label><input class="finput" type="time" id="wi-time"></div>
+      <div class="fg"><label class="flabel" for="wi-weight">Weight (kg)</label><input class="finput" type="number" id="wi-weight" placeholder="75.0" step="0.1" min="30" max="300"></div>
+      <div class="fg" style="max-width:120px"><label class="flabel" for="wi-note">Note</label><input class="finput" type="text" id="wi-note" placeholder="after breakfast…"></div>
+      <button class="btn-g" onclick="logWeight()"><i class="ti ti-plus" aria-hidden="true"></i> Log</button>
+    </div>
+  </div>
+  <div class="stats-g" id="weightStats"></div>
+  <div class="card">
+    <div class="slabel" style="margin-top:0">Weight over time</div>
+    <div class="chart-wrap" id="chartWrap"><canvas id="weightChart"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="slabel" style="margin-top:0">Log history</div>
+    <div id="weightLog"><p style="font-size:13px;color:var(--text2)">No entries yet.</p></div>
+  </div>
+</div>
+
+<div class="tab" id="pane-progress" role="tabpanel">
+  <div class="card">
+    <div class="slabel" style="margin-top:0">Week streak</div>
+    <div class="streak-row" id="streakRow"></div>
+    <div style="font-size:13.5px;color:var(--text2)" id="streakCount"></div>
+  </div>
+  <div class="stats-g" id="progressStats"></div>
+  <div class="card">
+    <div class="slabel" style="margin-top:0">7-day heatmap</div>
+    <div class="cal-dow"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
+    <div class="heatmap" id="heatmap"></div>
+  </div>
+  <div class="card" id="calCard">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <button class="cal-nav" onclick="calMove(-1)" aria-label="Previous month"><i class="ti ti-chevron-left"></i></button>
+      <div class="slabel" style="margin:0" id="calTitle">Calendar</div>
+      <button class="cal-nav" onclick="calMove(1)" aria-label="Next month"><i class="ti ti-chevron-right"></i></button>
+    </div>
+    <div class="cal-wd"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
+    <div class="cal-grid" id="calGrid"></div>
+    <div id="calDetail" style="margin-top:12px"></div>
+  </div>
+  <div class="card">
+    <div class="slabel" style="margin-top:0">Backup</div>
+    <div style="font-size:13.5px;color:var(--text2);margin-bottom:10px">Save your progress to a file on your drive, or load it back later / on another browser.</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="data-btn" onclick="exportData()"><i class="ti ti-download" aria-hidden="true"></i> Save progress</button>
+      <button class="data-btn ghost" onclick="document.getElementById('importFile').click()"><i class="ti ti-upload" aria-hidden="true"></i> Load progress</button>
+      <input type="file" id="importFile" accept="application/json,.json" style="display:none" onchange="importData(this)">
+    </div>
+    <div id="dataMsg" style="font-size:12px;margin-top:8px;color:var(--green)"></div>
+  </div>
+  <div class="card">
+    <div class="slabel" style="margin-top:0">Notes</div>
+    <textarea class="finput" id="progNotes" rows="4" placeholder="Goals, observations, PRs…" style="resize:none;width:100%" oninput="S.notes=this.value;save()"></textarea>
+  </div>
+</div>
+
+<div class="tab" id="pane-measure" role="tabpanel">
+  <div class="card">
+    <div class="slabel" style="margin-top:0">New measurement session</div>
+    <div id="measForm"></div>
+    <button class="btn-g" style="width:100%;height:44px;margin-top:6px" onclick="saveMeasure()"><i class="ti ti-plus" aria-hidden="true"></i> Save measurements</button>
+  </div>
+  <div class="slabel">Take your measurements</div>
+  <div style="font-size:12.5px;color:var(--text2);margin:-2px 0 12px">Use a soft tape measure, keep it snug and level, and relax the muscle unless noted. Tap a card for how-to.</div>
+  <div id="measCards"></div>
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px">
+      <div class="slabel" style="margin:0">Growth over time</div>
+      <select id="measChartSel" class="finput" style="max-width:170px;display:none" onchange="setMeasChart(this.value)"></select>
+    </div>
+    <div class="chart-wrap" id="measChartWrap"></div>
+  </div>
+  <div class="card">
+    <div class="slabel" style="margin-top:0">History</div>
+    <div id="measLog"></div>
+  </div>
+</div>
+</div>
+
+<script>
+// ── REAL EXERCISE DEMO MEDIA (looping GIF of a real person + how-to steps) ───
+// Source: hasaneyldrm/exercises-dataset (educational/non-commercial). GIFs are
+// downloaded locally into ./exgif so the app works offline.
+const EXMEDIA={"pushup":{"name":"push-up","gif":"videos/0662-I4hDWkc.gif","steps":["Start in a high plank position with your hands slightly wider than shoulder-width apart and your feet together.","Engage your core and lower your body towards the ground by bending your elbows, keeping your body in a straight line.","Pause for a moment when your chest is just above the ground, then push yourself back up to the starting position by straightening your arms.","Repeat for the desired number of repetitions."]},"press":{"name":"dumbbell seated shoulder press","gif":"videos/0405-znQUdHY.gif","steps":["Sit on a bench with a dumbbell in each hand, resting on your thighs.","Raise the dumbbells to shoulder height, palms facing forward.","Press the dumbbells upward until your arms are fully extended overhead.","Pause for a moment at the top, then slowly lower the dumbbells back to shoulder height.","Repeat for the desired number of repetitions."]},"fly":{"name":"dumbbell fly","gif":"videos/0308-yz9nUhF.gif","steps":["Lie flat on a bench with a dumbbell in each hand, palms facing each other.","Extend your arms straight up over your chest, with a slight bend in your elbows.","Keeping a slight bend in your elbows, lower your arms out to the sides in a wide arc until you feel a stretch in your chest.","Pause for a moment, then reverse the movement and bring the dumbbells back up to the starting position.","Repeat for the desired number of repetitions."]},"raise":{"name":"dumbbell lateral raise","gif":"videos/0334-DsgkuIt.gif","steps":["Stand with your feet shoulder-width apart and hold a dumbbell in each hand, palms facing your body.","Keep your back straight and engage your core.","Raise your arms out to the sides until they are parallel to the floor, keeping a slight bend in your elbows.","Pause for a moment at the top, then slowly lower your arms back down to the starting position.","Repeat for the desired number of repetitions."]},"diamond":{"name":"diamond push-up","gif":"videos/0283-soIB2rj.gif","steps":["Start in a high plank position with your hands close together, forming a diamond shape with your thumbs and index fingers.","Keep your body in a straight line from head to toe, engaging your core and glutes.","Lower your chest towards the diamond shape formed by your hands, keeping your elbows close to your body.","Pause for a moment at the bottom, then push yourself back up to the starting position.","Repeat for the desired number of repetitions."]},"extension":{"name":"dumbbell standing triceps extension","gif":"videos/0430-PdmaD0N.gif","steps":["Stand with your feet shoulder-width apart and hold a dumbbell in one hand.","Raise the dumbbell overhead, keeping your arm straight.","Bend your elbow and lower the dumbbell behind your head, keeping your upper arm stationary.","Extend your arm back up to the starting position.","Repeat for the desired number of repetitions."]},"row":{"name":"dumbbell bent over row","gif":"videos/0293-BJ0Hz5L.gif","steps":["Stand with your feet shoulder-width apart, knees slightly bent, and hold a dumbbell in each hand with your palms facing your body.","Bend forward at the hips, keeping your back straight and your core engaged.","Let your arms hang straight down towards the floor, with your elbows slightly bent.","Pull the dumbbells up towards your chest, squeezing your shoulder blades together.","Pause for a moment at the top, then slowly lower the dumbbells back down to the starting position.","Repeat for the desired number of repetitions."]},"superman":{"name":"hyperextension","gif":"videos/0489-zhMwOwE.gif","steps":["Adjust the hyperextension bench so that your upper thighs are resting on the pad and your feet are secured.","Cross your arms over your chest or place your hands behind your head.","Lower your upper body towards the ground while keeping your back straight.","Pause for a moment at the bottom, then raise your upper body back up until it is in line with your legs.","Repeat for the desired number of repetitions."]},"curl":{"name":"dumbbell biceps curl","gif":"videos/0294-NbVPDMW.gif","steps":["Stand up straight with a dumbbell in each hand, palms facing forward and arms fully extended.","Keeping your upper arms stationary, exhale and curl the weights while contracting your biceps.","Continue to raise the weights until your biceps are fully contracted and the dumbbells are at shoulder level.","Hold the contracted position for a brief pause as you squeeze your biceps.","Inhale and slowly begin to lower the dumbbells back to the starting position.","Repeat for the desired number of repetitions."]},"rearfly":{"name":"dumbbell rear lateral raise","gif":"videos/0380-v1qBec9.gif","steps":["Stand with your feet shoulder-width apart and hold a dumbbell in each hand, palms facing your body.","Bend your knees slightly and hinge forward at the hips, keeping your back straight and core engaged.","Raise your arms out to the sides, keeping a slight bend in your elbows, until they are parallel to the floor.","Pause for a moment at the top, then slowly lower your arms back down to the starting position.","Repeat for the desired number of repetitions."]},"hammer":{"name":"dumbbell hammer curl","gif":"videos/0313-slDvUAU.gif","steps":["Stand up straight with a dumbbell in each hand, palms facing your torso.","Keep your elbows close to your torso and rotate the palms of your hands until they are facing forward.","This will be your starting position.","Now, keeping the upper arms stationary, exhale and curl the weights while contracting your biceps.","Continue to raise the weights until your biceps are fully contracted and the dumbbells are at shoulder level.","Hold the contracted position for a brief pause as you squeeze your biceps.","Then, inhale and slowly begin to lower the dumbbells back to the starting position.","Repeat for the recommended amount of repetitions."]},"renegade":{"name":"kettlebell alternating renegade row","gif":"videos/0521-b9kqlBy.gif","steps":["Start in a high plank position with your hands gripping the kettlebells and your feet hip-width apart.","Engage your core and keep your body in a straight line from head to heels.","Pull one kettlebell up towards your chest, keeping your elbow close to your body.","Lower the kettlebell back down to the starting position and repeat with the other arm.","Continue alternating arms for the desired number of repetitions."]},"squat":{"name":"dumbbell goblet squat","gif":"videos/1760-yn8yg1r.gif","steps":["Stand with your feet shoulder-width apart, holding a dumbbell vertically against your chest with both hands.","Keeping your chest up and core engaged, lower your body down into a squat position by pushing your hips back and bending your knees.","Continue lowering until your thighs are parallel to the ground, or as low as you can comfortably go.","Pause for a moment at the bottom, then push through your heels to return to the starting position.","Repeat for the desired number of repetitions."]},"rdl":{"name":"dumbbell romanian deadlift","gif":"videos/1459-rR0LJzx.gif","steps":["Stand with your feet shoulder-width apart, holding a dumbbell in each hand with an overhand grip.","Keeping your back straight and your core engaged, hinge at the hips and lower the dumbbells towards the ground, allowing your knees to bend slightly.","Lower the dumbbells until you feel a stretch in your hamstrings, then push through your heels and engage your glutes to return to the starting position.","Repeat for the desired number of repetitions."]},"lunge":{"name":"walking lunge","gif":"videos/1460-IZVHb27.gif","steps":["Stand with your feet shoulder-width apart.","Take a step forward with your right leg, lowering your body into a lunge position.","Keep your torso upright and your front knee aligned with your ankle.","Push off with your right foot and bring your left foot forward, stepping into a lunge position with your left leg.","Continue alternating legs and walking forward, maintaining a controlled and steady pace.","Repeat for the desired number of repetitions."]},"stepup":{"name":"dumbbell step-up","gif":"videos/0431-aXtJhlg.gif","steps":["Stand in front of a bench or step with a dumbbell in each hand, palms facing your body.","Place your right foot on the bench or step, ensuring your entire foot is in contact with the surface.","Push through your right heel and lift your body up onto the bench or step, straightening your right leg.","Bring your left foot up onto the bench or step, standing fully upright.","Step back down with your left foot, followed by your right foot, returning to the starting position.","Repeat for the desired number of repetitions, then switch legs."]},"bridge":{"name":"low glute bridge on floor","gif":"videos/3013-u0cNiij.gif","steps":["Lie flat on your back with your knees bent and feet flat on the ground.","Place your arms by your sides, palms facing down.","Engage your glutes and core, then lift your hips off the ground until your body forms a straight line from your knees to your shoulders.","Pause for a moment at the top, squeezing your glutes.","Slowly lower your hips back down to the starting position.","Repeat for the desired number of repetitions."]},"calf":{"name":"bodyweight standing calf raise","gif":"videos/1373-bJYHBIN.gif","steps":["Stand with your feet shoulder-width apart, toes pointing forward.","Place your hands on a wall or stable surface for balance.","Slowly raise your heels off the ground, lifting your body weight onto the balls of your feet.","Pause for a moment at the top, then slowly lower your heels back down to the starting position.","Repeat for the desired number of repetitions."]},"pike":{"name":"pike-to-cobra push-up","gif":"videos/3662-XPUDTt7.gif","steps":["Start in a push-up position with your hands slightly wider than shoulder-width apart and your feet together.","Engage your core and lift your hips up towards the ceiling, forming an inverted V shape with your body.","Lower your upper body towards the ground by bending your elbows, keeping them close to your body.","As you lower down, shift your weight forward and transition into a cobra pose by straightening your arms and lifting your chest up.","Reverse the movement by bending your elbows and lowering your chest back down towards the ground.","Push through your hands to return to the inverted V position.","Continue the movement by lowering your hips back down towards the ground, returning to the starting push-up position.","Repeat for the desired number of repetitions."]},"floorpress":{"name":"dumbbell bench press","gif":"videos/0289-SpYC0Kp.gif","steps":["Lie flat on a bench with your feet flat on the ground and your back pressed against the bench.","Hold a dumbbell in each hand, with your palms facing forward and your arms extended above your chest.","Lower the dumbbells slowly to the sides of your chest, keeping your elbows at a 90-degree angle.","Pause for a moment, then push the dumbbells back up to the starting position, fully extending your arms.","Repeat for the desired number of repetitions."]},"arnold":{"name":"dumbbell arnold press","gif":"videos/2137-Xy4jlWA.gif","steps":["Sit on a bench with back support and hold a dumbbell in each hand at shoulder level, palms facing your body and elbows bent.","Press the dumbbells upward until your arms are fully extended and your palms are facing forward.","Rotate your wrists as you lift, so that your palms are facing forward at the top of the movement.","Pause for a moment at the top, then slowly lower the dumbbells back to the starting position.","Repeat for the desired number of repetitions."]},"concurl":{"name":"dumbbell concentration curl","gif":"videos/0297-gvsWLQw.gif","steps":["Sit on a bench with your legs spread apart and a dumbbell in one hand, resting your elbow on the inside of your thigh.","Fully extend your arm and hold the dumbbell with an underhand grip.","Keeping your upper arm stationary, exhale and curl the weight up towards your shoulder while contracting your biceps.","Continue to raise the dumbbell until your biceps are fully contracted and the dumbbell is at shoulder level.","Hold the contracted position for a brief pause as you squeeze your biceps.","Inhale and slowly lower the dumbbell back to the starting position.","Repeat for the desired number of repetitions, then switch arms."]},"skull":{"name":"dumbbell lying triceps extension","gif":"videos/0351-mpKZGWz.gif","steps":["Lie flat on a bench with a dumbbell in each hand, palms facing each other.","Extend your arms straight up over your chest, keeping your elbows close to your body.","Lower the dumbbells down towards your forehead, bending your elbows.","Pause for a moment, then extend your arms back up to the starting position.","Repeat for the desired number of repetitions."]},"burpee":{"name":"burpee","gif":"videos/1160-dK9394r.gif","steps":["Start in a standing position with your feet shoulder-width apart.","Lower your body into a squat position by bending your knees and placing your hands on the floor in front of you.","Kick your feet back into a push-up position.","Perform a push-up, keeping your body in a straight line.","Jump your feet back into the squat position.","Jump up explosively, reaching your arms overhead.","Land softly and immediately lower back into a squat position to begin the next repetition."]},"plank":{"name":"front plank with twist","gif":"videos/0464-CosupLu.gif","steps":["Start in a high plank position with your hands directly under your shoulders and your body in a straight line from head to toe.","Engage your core and glutes to maintain a stable position.","Rotate your torso to the right, lifting your right arm and extending it towards the ceiling.","Keep your hips and legs stable as you twist.","Hold for a moment, then return to the starting position.","Repeat the twist on the left side.","Continue alternating sides for the desired number of repetitions."]},"mountain":{"name":"mountain climber","gif":"videos/0630-RJgzwny.gif","steps":["Start in a high plank position with your hands directly under your shoulders and your body in a straight line.","Engage your core and bring your right knee towards your chest, then quickly switch and bring your left knee towards your chest.","Continue alternating legs in a running motion, keeping your hips low and your core engaged.","Maintain a steady pace and breathe evenly throughout the exercise.","Repeat for the desired number of repetitions."]},"twist":{"name":"russian twist","gif":"videos/0687-XVDdcoj.gif","steps":["Sit on the ground with your knees bent and feet flat on the floor.","Lean back slightly while keeping your back straight and your core engaged.","Hold your hands together in front of your chest or hold a weight if desired.","Lift your feet off the ground, balancing on your sit bones.","Twist your torso to the right, bringing your hands or weight towards the right side of your body.","Pause for a moment, then twist your torso to the left, bringing your hands or weight towards the left side of your body.","Continue alternating sides for the desired number of repetitions."]},"hollow":{"name":"dead bug","gif":"videos/0276-iny3m5y.gif","steps":["Lie flat on your back with your arms extended towards the ceiling.","Bend your knees and lift your legs off the ground, creating a 90-degree angle at your hips and knees.","Engage your core and lower back to press your lower back into the ground.","Slowly lower your right arm and left leg towards the ground, keeping them straight and hovering just above the floor.","Pause for a moment, then return to the starting position.","Repeat the movement with your left arm and right leg.","Continue alternating sides for the desired number of repetitions."]},"jumpsquat":{"name":"jump squat","gif":"videos/0514-LIlE5Tn.gif","steps":["Stand with your feet shoulder-width apart.","Lower your body into a squat position by bending your knees and pushing your hips back.","Jump explosively off the ground, extending your hips, knees, and ankles.","While in mid-air, quickly bring your arms forward for balance.","Land softly on the balls of your feet and immediately go into the next repetition.","Repeat for the desired number of repetitions."]}};
+function gifSrc(type){const m=EXMEDIA[type];return m?('exgif/'+type+'.gif'):'';}
+function getAnimHTML(type){
+  const src=gifSrc(type);
+  if(!src)return '<div class="exfig exfig-missing" aria-hidden="true"><i class="ti ti-barbell"></i></div>';
+  return '<img class="exfig" src="'+src+'" alt="'+type+' demonstration" loading="lazy" decoding="async">';
+}
+function getStepsHTML(type){
+  const m=EXMEDIA[type];
+  if(!m||!m.steps||!m.steps.length)return '';
+  return stepsListHTML(m.steps);
+}
+function stepsListHTML(steps){
+  const lis=steps.map(s=>'<li>'+s.replace(/</g,'&lt;')+'</li>').join('');
+  return '<div class="howto-hd"><i class="ti ti-list-numbers" aria-hidden="true"></i> How to perform</div><ol class="howto">'+lis+'</ol>';
+}
+// An exercise (or a substitute) may carry its own `steps` array; otherwise fall
+// back to the shared per-animation steps. Lets a swap show its own instructions.
+function exStepsHTML(ex){return (ex.steps&&ex.steps.length)?stepsListHTML(ex.steps):getStepsHTML(ex.anim);}
+
+// GIFs autoplay on their own; nothing to drive per-frame. Kept as a no-op so
+// existing render calls stay valid.
+function initFigures(){}
+
+// ── WORKOUT DATA ──────────────────────────────────────────────────────────────
+const PLAN=[
+  {day:'Mon',name:'Push',focus:'Chest · Shoulders · Triceps',type:'strength',exercises:[
+    {name:'Push-ups',meta:'Bodyweight',sets:3,reps:'12–15',anim:'pushup',rest:'60s',tip:'Hands shoulder-width, core locked'},
+    {name:'Dumbbell shoulder press',meta:'Dumbbells',sets:3,reps:'10–12',anim:'press',rest:'75s',tip:'Drive up, lower to ear level',alts:[
+      {name:'Pike push-up',meta:'Bodyweight',sets:3,reps:'10–12',anim:'pike',rest:'75s',tip:'No equipment — hips high, lower head toward the floor'}]},
+    {name:'Dumbbell chest fly',meta:'Dumbbells',sets:3,reps:'10–12',anim:'fly',rest:'60s',tip:'Slight bend in elbow throughout',alts:[
+      {name:'Push-up',meta:'Bodyweight',sets:3,reps:'12–15',anim:'pushup',rest:'60s',tip:'No equipment — chest to floor, core tight'},
+      {name:'Diamond push-up',meta:'Bodyweight',sets:3,reps:'8–12',anim:'diamond',rest:'60s',tip:'No equipment — hands together, deeper chest & triceps'}]},
+    {name:'Lateral raises',meta:'Dumbbells',sets:3,reps:'12–15',anim:'raise',rest:'60s',tip:'Lead with elbows, control down',alts:[
+      {name:'Pike push-up',meta:'Bodyweight',sets:3,reps:'10–12',anim:'pike',rest:'60s',tip:'No equipment — shoulder-focused pressing'}]},
+    {name:'Diamond push-ups',meta:'Bodyweight',sets:3,reps:'8–12',anim:'diamond',rest:'60s',tip:'Hands together, elbows track back'},
+    {name:'Overhead tricep extension',meta:'Dumbbell',sets:3,reps:'10–12',anim:'extension',rest:'60s',tip:'Keep upper arms still',alts:[
+      {name:'Diamond push-up',meta:'Bodyweight',sets:3,reps:'8–12',anim:'diamond',rest:'60s',tip:'No equipment — hands together, elbows track back'}]},
+  ]},
+  {day:'Tue',name:'Pull',focus:'Back · Biceps · Rear Delts',type:'strength',exercises:[
+    {name:'Bent-over row',meta:'Dumbbells',sets:3,reps:'10–12',anim:'row',rest:'75s',tip:'Hinge 45°, pull elbows to hip',alts:[
+      {name:'Backpack bent-over row',meta:'Loaded backpack',sets:3,reps:'10–12',anim:'row',rest:'75s',tip:'Same movement — load a backpack instead of dumbbells',steps:['Load a backpack or duffel until it feels challenging.','Hinge forward ~45° with a flat back; let the bag hang from your hands by the top strap.','Pull the strap to your waist, squeeze your back, then lower under control.']}]},
+    {name:'Superman hold',meta:'Bodyweight',sets:3,reps:'12 reps',anim:'superman',rest:'45s',tip:'Hold 2s at top, squeeze glutes',alts:[
+      {name:'Glute bridge',meta:'Bodyweight',sets:3,reps:'15–20',anim:'bridge',rest:'45s',tip:'No equipment — squeeze glutes at top, hold 1s'},
+      {name:'Hollow body hold',meta:'Bodyweight',sets:3,reps:'20–30s',anim:'hollow',rest:'45s',tip:'No equipment — press lower back to floor, legs & shoulders raised'}]},
+    {name:'Bicep curl',meta:'Dumbbells',sets:3,reps:'10–12',anim:'curl',rest:'60s',tip:'Full range, no swinging',alts:[
+      {name:'Backpack bicep curl',meta:'Loaded backpack',sets:3,reps:'12–15',anim:'curl',rest:'60s',tip:'Same movement — load a backpack instead of dumbbells',steps:['Load a backpack until it feels challenging.','Hold it by the top strap or handle, arms hanging, elbows tucked to your sides.','Curl to your shoulders without swinging, then lower slowly.']}]},
+    {name:'Rear delt fly',meta:'Dumbbells',sets:3,reps:'12–15',anim:'rearfly',rest:'60s',tip:'Hinge forward, fly wide',alts:[
+      {name:'Water-bottle rear delt fly',meta:'Water bottles',sets:3,reps:'15–20',anim:'rearfly',rest:'60s',tip:'Same movement — use water bottles or cans',steps:['Hold a full water bottle or can in each hand.','Hinge forward ~45° with a flat back, a slight bend in the elbows.','Fly your arms out wide to shoulder height, squeeze your rear delts, then lower slowly.']}]},
+    {name:'Hammer curl',meta:'Dumbbells',sets:3,reps:'10–12',anim:'hammer',rest:'60s',tip:'Neutral grip, slow eccentric',alts:[
+      {name:'Backpack hammer curl',meta:'Loaded backpack',sets:3,reps:'12–15',anim:'hammer',rest:'60s',tip:'Same movement — load a backpack instead of dumbbells',steps:['Load a backpack until it feels challenging.','Hold it by the side straps with palms facing each other (neutral grip).','Keep elbows tucked and curl to your shoulders, then lower slowly.']}]},
+    {name:'Renegade row',meta:'Dumbbells',sets:3,reps:'8 each side',anim:'renegade',rest:'75s',tip:'Plank position, zero hip rotation',alts:[
+      {name:'Plank shoulder taps',meta:'Bodyweight',sets:3,reps:'10 each side',anim:'plank',rest:'60s',tip:'No equipment — tap opposite shoulder, keep hips dead still'},
+      {name:'Mountain climbers',meta:'Bodyweight',sets:3,reps:'20 each side',anim:'mountain',rest:'45s',tip:'No equipment — drive knees fast, hips stay low'}]},
+  ]},
+  {day:'Wed',name:'Legs',focus:'Quads · Hamstrings · Glutes · Calves',type:'strength',exercises:[
+    {name:'Goblet squat',meta:'Dumbbell',sets:4,reps:'12–15',anim:'squat',rest:'75s',tip:'Hold at chest, sit back deep',alts:[
+      {name:'Reverse lunge',meta:'Bodyweight',sets:4,reps:'12 each leg',anim:'lunge',rest:'75s',tip:'No equipment — step back, front knee to 90°'},
+      {name:'Jump squat',meta:'Bodyweight',sets:4,reps:'15',anim:'jumpsquat',rest:'75s',tip:'No equipment — explode up, land soft'}]},
+    {name:'Romanian deadlift',meta:'Dumbbells',sets:3,reps:'10–12',anim:'rdl',rest:'75s',tip:'Hinge until hamstring stretch',alts:[
+      {name:'Glute bridge',meta:'Bodyweight',sets:3,reps:'15–20',anim:'bridge',rest:'75s',tip:'No equipment — drive hips up, squeeze hamstrings & glutes'}]},
+    {name:'Walking lunges',meta:'Bodyweight / DBs',sets:3,reps:'10 each leg',anim:'lunge',rest:'60s',tip:'Step forward, knee to 90°'},
+    {name:'Dumbbell step-up',meta:'Dumbbells + chair',sets:3,reps:'10 each leg',anim:'stepup',rest:'60s',tip:'Drive through heel to stand',alts:[
+      {name:'Reverse lunge',meta:'Bodyweight',sets:3,reps:'12 each leg',anim:'lunge',rest:'60s',tip:'No equipment — step back, front knee to 90°'},
+      {name:'Jump squat',meta:'Bodyweight',sets:3,reps:'15',anim:'jumpsquat',rest:'60s',tip:'No equipment — explode up, land soft'}]},
+    {name:'Glute bridge',meta:'Bodyweight / DB',sets:3,reps:'15–20',anim:'bridge',rest:'45s',tip:'Squeeze glutes at top, hold 1s'},
+    {name:'Calf raises',meta:'Bodyweight / DB',sets:4,reps:'20–25',anim:'calf',rest:'45s',tip:'Full range, pause top & bottom'},
+  ]},
+  {day:'Thu',name:'Rest',focus:'Active recovery',type:'rest',exercises:[]},
+  {day:'Fri',name:'Upper',focus:'Full upper body',type:'strength',exercises:[
+    {name:'Pike push-up',meta:'Bodyweight',sets:3,reps:'10–12',anim:'pike',rest:'60s',tip:'Hips high, head through at bottom'},
+    {name:'Floor chest press',meta:'Dumbbells',sets:3,reps:'10–12',anim:'floorpress',rest:'75s',tip:'Lie on floor, elbows 45° out',alts:[
+      {name:'Push-up',meta:'Bodyweight',sets:3,reps:'12–15',anim:'pushup',rest:'75s',tip:'No equipment — chest to floor, core tight'},
+      {name:'Diamond push-up',meta:'Bodyweight',sets:3,reps:'8–12',anim:'diamond',rest:'75s',tip:'No equipment — hands together, deeper chest & triceps'}]},
+    {name:'Single-arm row',meta:'Dumbbell',sets:3,reps:'10–12 each',anim:'row',rest:'60s',tip:'Brace on knee, full pull',alts:[
+      {name:'Backpack single-arm row',meta:'Loaded backpack',sets:3,reps:'10–12 each',anim:'row',rest:'60s',tip:'Same movement — load a backpack instead of a dumbbell',steps:['Load a backpack until it feels challenging.','Brace your free hand on a chair or knee, back flat; hold the bag strap in the other hand.','Row the bag to your hip, squeeze, lower under control. Finish all reps, then switch sides.']}]},
+    {name:'Arnold press',meta:'Dumbbells',sets:3,reps:'10–12',anim:'arnold',rest:'75s',tip:'Rotate palms on the way up',alts:[
+      {name:'Pike push-up',meta:'Bodyweight',sets:3,reps:'10–12',anim:'pike',rest:'75s',tip:'No equipment — shoulder-focused pressing'}]},
+    {name:'Concentration curl',meta:'Dumbbell',sets:3,reps:'10–12 each',anim:'concurl',rest:'60s',tip:'Elbow on inner thigh, full ROM',alts:[
+      {name:'Backpack concentration curl',meta:'Loaded backpack',sets:3,reps:'12–15 each',anim:'concurl',rest:'60s',tip:'Same movement — load a backpack instead of a dumbbell',steps:['Sit and load a backpack until it feels challenging; hold it by the top strap.','Brace the back of your upper arm against your inner thigh, arm extended.','Curl the bag to your shoulder with full range, then lower slowly.']}]},
+    {name:'Skull crusher',meta:'Dumbbells',sets:3,reps:'10–12',anim:'skull',rest:'60s',tip:'Lower to temples, extend up',alts:[
+      {name:'Diamond push-up',meta:'Bodyweight',sets:3,reps:'8–12',anim:'diamond',rest:'60s',tip:'No equipment — hands together, elbows track back'}]},
+  ]},
+  {day:'Sat',name:'Core & Cardio',focus:'Abs · Stability · Conditioning',type:'cardio',exercises:[
+    {name:'Burpees',meta:'Bodyweight',sets:4,reps:'10–15',anim:'burpee',rest:'60s',tip:'Chest to floor, explosive jump'},
+    {name:'Plank hold',meta:'Bodyweight',sets:3,reps:'30–60s',anim:'plank',rest:'45s',tip:'Squeeze everything, breathe'},
+    {name:'Mountain climbers',meta:'Bodyweight',sets:3,reps:'20 each side',anim:'mountain',rest:'45s',tip:'Fast drive, hips stay low'},
+    {name:'Russian twist',meta:'Bodyweight / DB',sets:3,reps:'20 total',anim:'twist',rest:'45s',tip:'Rotate fully each side'},
+    {name:'Hollow body hold',meta:'Bodyweight',sets:3,reps:'20–30s',anim:'hollow',rest:'45s',tip:'Lower back pressed to floor'},
+    {name:'Jump squats',meta:'Bodyweight',sets:3,reps:'15',anim:'jumpsquat',rest:'60s',tip:'Land soft, absorb through legs'},
+  ]},
+  {day:'Sun',name:'Rest',focus:'Full rest or light walk',type:'rest',exercises:[]}
+];
+
+// ── STATE ────────────────────────────────────────────────────────────────────
+let S={currentDay:0,sets:{},dayDone:{},weights:[],notes:''};
+function save(){localStorage.setItem('fittrack_v3',JSON.stringify(S))}
+function load(){try{const d=localStorage.getItem('fittrack_v3');if(d)S=JSON.parse(d)}catch(e){}}
+
+// One-time migration: data logged before per-week dating used un-dated keys
+// (e.g. `d2e0s0_done`, `dd2`) that the calendar can't place. The day-of-week index
+// survives in the key, so we stamp those keys with a target week's Monday — landing
+// each entry on its correct weekday. Pre-fix builds only kept one week of data
+// (each week overwrote the last), so collapsing the orphans into one week is faithful.
+function migrateLegacyKeys(targetMonday){
+  let n=0;
+  const dated=/^\d{4}-\d{2}-\d{2}_/;
+  for(const k of Object.keys(S.sets||{})){if(!dated.test(k)){S.sets[targetMonday+'_'+k]=S.sets[k];delete S.sets[k];n++}}
+  for(const k of Object.keys(S.dayDone||{})){if(!dated.test(k)){S.dayDone[targetMonday+'_'+k]=S.dayDone[k];delete S.dayDone[k];n++}}
+  return n;
+}
+
+// Monday-of-current-week as an ISO date string, used to namespace per-week keys
+// so each week tracks independently instead of overwriting the previous one.
+// Local YYYY-MM-DD (no UTC conversion — toISOString would slip a day in timezones
+// ahead of UTC, e.g. IST, making weekKey land on Sunday instead of Monday).
+function ymdLocal(d){return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
+// Monday of the week for a date, consistent with the calendar's ymdMeta (which uses
+// addDaysYmd/ymdDow), so Workout/Weight logging and the calendar share one namespace.
+function weekKey(dt){const base=ymdLocal(dt?new Date(dt):new Date());return addDaysYmd(base,-ymdDow(base))}
+function K(d,e,s,f){return`${weekKey()}_d${d}e${e}s${s}_${f}`}
+function DK(d){return`${weekKey()}_dd${d}`}
+
+// ── UI ────────────────────────────────────────────────────────────────────────
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('pane-'+name).classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+  if(name==='weight')renderWeight();
+  if(name==='progress')renderProgress();
+  if(name==='measure')renderMeasure();
+}
+
+function setDay(i){S.currentDay=i;save();renderWorkout()}
+// This week's actual date for a weekday index (Mon=0), so the Workout tab can use
+// the same per-date plan override (S.dayPlan) as the calendar.
+function weekDateFor(i){return addDaysYmd(weekKey(),i)}
+function setWorkoutPlan(i,idx){
+  const ymd=weekDateFor(i); idx=+idx; S.dayPlan=S.dayPlan||{};
+  if(idx===i)delete S.dayPlan[ymd]; else S.dayPlan[ymd]=idx;
+  save();renderWorkout();
+}
+
+function renderWorkout(){
+  const i=S.currentDay, ymd=weekDateFor(i), D=planFor(ymd), overridden=planIdxFor(ymd)!==i;
+  document.getElementById('dayPills').innerHTML=PLAN.map((d,j)=>{
+    const pj=planFor(weekDateFor(j));
+    return`<button class="dpill${j===i?' active':''}${S.dayDone[DK(j)]?' done':''}${pj.type==='rest'?' restday':''}" onclick="setDay(${j})">${d.day}<br><span style="font-size:11.5px;opacity:.8">${pj.name}</span></button>`;
+  }).join('');
+
+  const planBar=`<div class="cd-planrow wk-planrow"><span class="cd-planlbl">Plan</span>`+
+    `<select class="cd-plan" onchange="setWorkoutPlan(${i},this.value)" aria-label="Workout plan for ${D.day}">`+
+    PLAN.map((p,k)=>`<option value="${k}"${k===planIdxFor(ymd)?' selected':''}>${p.name}</option>`).join('')+`</select>`+
+    (overridden?`<button class="cd-resetplan" onclick="setWorkoutPlan(${i},${i})" title="Reset to ${PLAN[i].name}"><i class="ti ti-rotate"></i></button>`:'')+`</div>`;
+
+  const pane=document.getElementById('workoutPane');
+  if(D.type==='rest'){
+    pane.innerHTML=planBar+`<div class="rest-view"><i class="ti ti-zzz rest-icon"></i><h3>Rest — ${D.focus}</h3><p style="font-size:13px">Light walking, stretching, or foam rolling. Pick a workout from the Plan dropdown to train instead.</p></div>`;
+    document.getElementById('progFill').style.width='0%';
+    document.getElementById('progLabel').textContent='Rest day';
+    const b=document.getElementById('doneBtn');b.textContent='Rest day';b.disabled=true;initFigures();return;
+  }
+
+  let total=0,done=0;
+  D.exercises.forEach((ex,ei)=>{for(let s=0;s<ex.sets;s++){total++;if(S.sets[K(i,ei,s,'done')])done++}});
+  const pct=total?Math.round(done/total*100):0;
+  document.getElementById('progFill').style.width=pct+'%';
+  document.getElementById('progLabel').textContent=`${done} of ${total} sets complete`;
+  const b=document.getElementById('doneBtn');
+  b.textContent=S.dayDone[DK(i)]?'✓ Workout complete!':'Mark workout complete';
+  b.disabled=!!S.dayDone[DK(i)];
+
+  pane.innerHTML=planBar+D.exercises.map((baseEx,ei)=>{
+    const ex=exEff(baseEx);
+    const curSub=baseEx.alts?((S.exSwap&&S.exSwap[baseEx.name]!=null)?S.exSwap[baseEx.name]:''):'';
+    const open=S['open_'+i+'_'+ei];
+    const isBody=isBodyweight(ex);
+    const sRows=Array.from({length:ex.sets},(_,s)=>{
+      const dn=S.sets[K(i,ei,s,'done')]||false;
+      return`<div class="setrow">
+        <div class="sn">${s+1}</div>
+        <select class="sinput" onchange="setV(${i},${ei},${s},'reps',this.value)" aria-label="reps" title="reps">${selOpts(REPS_OPTS,S.sets[K(i,ei,s,'reps')])}</select>
+        ${weightCell(isBody,S.sets[K(i,ei,s,'weight')],`setV(${i},${ei},${s},'weight',this.value)`)}
+        <select class="sinput" onchange="setV(${i},${ei},${s},'ease',this.value)" aria-label="ease 0-10" title="How easy was it? 0 = brutal, 10 = effortless">${selOpts(EASE_OPTS,S.sets[K(i,ei,s,'ease')])}</select>
+        <div class="scheck${dn?' done':''}" id="ck_${ei}_${s}" onclick="toggleSet(${i},${ei},${s})" role="checkbox" aria-checked="${dn}" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' ')toggleSet(${i},${ei},${s})">${dn?'✓':''}</div>
+      </div>`;
+    }).join('');
+    const ytQ=encodeURIComponent(ex.name+' exercise form tutorial');
+    return`<div class="excard" id="excard_${ei}">
+      <div class="exhead" onclick="toggleEx(${i},${ei})" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' ')toggleEx(${i},${ei})">
+        <div class="ex-anims">${getAnimHTML(ex.anim)}</div>
+        <div class="ex-info">
+          <div class="ex-name">${ex.name}</div>
+          <div class="ex-meta">${ex.meta} · ${ex.sets}×${ex.reps}</div>
+          <div class="ex-tip">${ex.tip}</div>
+        </div>
+        <div class="ex-chev${open?' open':''}" aria-hidden="true"><i class="ti ti-chevron-down"></i></div>
+      </div>
+      <div class="exbody${open?' open':''}" id="exbody_${ei}">
+        ${baseEx.alts?`<div class="ex-swaprow"><span class="ex-swaplbl"><i class="ti ti-replace" aria-hidden="true"></i> No equipment? Swap exercise</span><select class="cd-plan ex-swapsel" onchange="setExSwap(${i},${ei},this.value)" aria-label="Substitute ${baseEx.name}"><option value=""${curSub===''?' selected':''}>${baseEx.name} (original)</option>${baseEx.alts.map((a,ai)=>`<option value="${ai}"${curSub===ai?' selected':''}>${a.name}</option>`).join('')}</select></div>`:''}
+        <a class="yt-btn" href="https://www.youtube.com/results?search_query=${ytQ}" target="_blank" rel="noopener">
+          <i class="ti ti-brand-youtube" style="color:#ff0000;font-size:14px" aria-hidden="true"></i> Watch demo on YouTube
+        </a>
+        ${exStepsHTML(ex)}
+        <div class="sets-hd"><span></span><span>Reps</span><span>Weight (kg)</span><span>Ease 0–10</span><span></span></div>
+        ${sRows}
+        <div class="rest-hint"><i class="ti ti-clock" style="font-size:12px" aria-hidden="true"></i> Rest ${ex.rest} between sets</div>
+      </div>
+    </div>`;
+  }).join('')+`<div class="slabel">Workout notes</div>
+  <textarea class="finput" rows="3" placeholder="How did it feel? PRs? Adjustments…" style="width:100%;resize:none" oninput="setDayNote('${ymd}',this.value)">${dayNoteOf(ymd)}</textarea>`;
+  initFigures();
+}
+
+function toggleEx(di,ei){
+  const k='open_'+di+'_'+ei; S[k]=!S[k]; save();
+  document.getElementById('exbody_'+ei).classList.toggle('open',!!S[k]);
+  document.querySelector(`#excard_${ei} .ex-chev`).classList.toggle('open',!!S[k]);
+}
+// Per-exercise substitution (e.g. swap an equipment move for a bodyweight one).
+// Keyed by the base exercise's name so the choice persists across weeks; the set
+// slot (i,ei) is unchanged, so logged sets stay with that slot.
+function exEff(base){const m=S.exSwap&&S.exSwap[base.name];return (base.alts&&m!=null&&base.alts[m])?base.alts[m]:base;}
+function setExSwap(di,ei,v){
+  const base=planFor(weekDateFor(di)).exercises[ei]; if(!base)return;
+  S.exSwap=S.exSwap||{};
+  if(v===''||v==null)delete S.exSwap[base.name]; else S.exSwap[base.name]=+v;
+  save(); renderWorkout();
+}
+// ── BACKUP: save/load progress to a file on disk ─────────────────────────────
+function dataMsg(t,ok){const el=document.getElementById('dataMsg');if(!el)return;el.style.color=ok===false?'var(--red)':'var(--green)';el.textContent=t;if(t)setTimeout(()=>{if(el.textContent===t)el.textContent=''},5000)}
+function exportData(){
+  const payload={app:'fittrack',version:3,exported:new Date().toISOString(),data:S};
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=`fittrack-backup-${ymdLocal(new Date())}.json`;
+  document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+  dataMsg('Progress saved to your downloads folder.');
+}
+function importData(input){
+  const f=input.files&&input.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const p=JSON.parse(r.result);
+      const incoming=p&&p.data&&typeof p.data==='object'?p.data:(p&&p.sets?p:null);
+      if(!incoming||typeof incoming!=='object'||!('sets'in incoming))throw new Error('Not a FitTrack backup file.');
+      if(!confirm('Replace all current progress with the contents of this backup? This cannot be undone.')){input.value='';return}
+      S=incoming;save();
+      input.value='';
+      dataMsg('Progress loaded. Refreshing…');
+      setTimeout(()=>location.reload(),700);
+    }catch(e){dataMsg('Could not load: '+e.message,false);input.value='';}
+  };
+  r.readAsText(f);
+}
+function applyLayout(){document.querySelector('.shell').classList.toggle('wide',!!S.wideLayout)}
+function toggleLayout(){S.wideLayout=!S.wideLayout;save();applyLayout()}
+function setV(di,ei,si,f,v){S.sets[K(di,ei,si,f)]=v;save()}
+// Dropdown option lists for the set rows.
+const REPS_OPTS=Array.from({length:30},(_,i)=>i+1); // 1–30
+// BW, 0, then every 1 kg from 2–20 (common dumbbell range), then 2.5-kg steps to 60.
+const WEIGHT_OPTS=(()=>{const a=['BW',0];for(let w=2;w<=20;w++)a.push(w);for(let w=22.5;w<=60;w+=2.5)a.push(w);return a})();
+const EASE_OPTS=Array.from({length:11},(_,i)=>i); // 0 (brutal) – 10 (effortless)
+// Build <option>s; keep any previously-saved off-grid value so existing logs survive.
+function selOpts(vals,cur){
+  cur=cur==null?'':String(cur);
+  let html=`<option value=""${cur===''?' selected':''}>—</option>`;
+  if(cur!==''&&!vals.map(String).includes(cur))html+=`<option value="${cur}" selected>${cur}</option>`;
+  for(const v of vals)html+=`<option value="${v}"${String(v)===cur?' selected':''}>${v}</option>`;
+  return html;
+}
+function isBodyweight(ex){return/body/.test((ex.meta||'').toLowerCase())}
+// Weight cell. Bodyweight moves get an "add weight" button (manual number input on
+// click) instead of the dumbbell dropdown; non-bodyweight moves get the dropdown.
+// `setter` is the JS to run on change, e.g. "setV(0,1,2,'weight',this.value)".
+function weightCell(body,cur,setter){
+  cur=cur==null?'':String(cur);
+  if(body){
+    if(cur===''||cur==='BW')return`<button type="button" class="bw-add" data-setter="${encodeURIComponent(setter)}" onclick="bwAddWeight(this)" title="Bodyweight — tap to add extra load (vest, plate, dumbbell)">BW <i class="ti ti-plus" aria-hidden="true"></i></button>`;
+    return`<input class="sinput bw-input" type="number" inputmode="decimal" step="0.5" min="0" placeholder="+kg" value="${cur}" onchange="${setter}" title="Added weight (kg) — clear to go back to bodyweight">`;
+  }
+  return`<select class="sinput" onchange="${setter}" aria-label="kg" title="weight (kg)">${selOpts(WEIGHT_OPTS,cur)}</select>`;
+}
+function bwAddWeight(btn){
+  const inp=document.createElement('input');
+  inp.className='sinput bw-input';inp.type='number';inp.step='0.5';inp.min='0';inp.placeholder='+kg';
+  inp.setAttribute('onchange',decodeURIComponent(btn.dataset.setter));
+  btn.replaceWith(inp);inp.focus();
+}
+function toggleSet(di,ei,si){
+  const k=K(di,ei,si,'done'); S.sets[k]=!S.sets[k]; save();
+  const el=document.getElementById(`ck_${ei}_${si}`);
+  if(el){el.className='scheck'+(S.sets[k]?' done':'');el.textContent=S.sets[k]?'✓':''}
+  const D=planFor(weekDateFor(di)); let total=0,done=0;
+  D.exercises.forEach((ex,i)=>{for(let s=0;s<ex.sets;s++){total++;if(S.sets[K(di,i,s,'done')])done++}});
+  document.getElementById('progFill').style.width=(total?Math.round(done/total*100):0)+'%';
+  document.getElementById('progLabel').textContent=`${done} of ${total} sets complete`;
+}
+function markDone(){S.dayDone[DK(S.currentDay)]=true;save();renderWorkout()}
+
+// ── WEIGHT ────────────────────────────────────────────────────────────────────
+let wChart=null;
+function logWeight(){
+  const d=document.getElementById('wi-date').value;
+  const t=document.getElementById('wi-time').value;
+  const w=parseFloat(document.getElementById('wi-weight').value);
+  const note=document.getElementById('wi-note').value.trim();
+  if(!d||isNaN(w)||w<20||w>400){alert('Enter a valid date and weight.');return}
+  S.weights=S.weights.filter(e=>e.date!==d);
+  S.weights.push({date:d,time:t,weight:w,note});
+  S.weights.sort((a,b)=>a.date.localeCompare(b.date));
+  save();
+  document.getElementById('wi-weight').value='';
+  document.getElementById('wi-note').value='';
+  renderWeight();
+}
+function deleteWeight(date){S.weights=S.weights.filter(e=>e.date!==date);save();renderWeight()}
+function renderWeight(){
+  const ws=S.weights, latest=ws.length?ws[ws.length-1]:null, first=ws[0]||null;
+  const diff=ws.length>1?+(latest.weight-first.weight).toFixed(1):null;
+  document.getElementById('weightStats').innerHTML=`
+    <div class="scard"><div class="scard-lbl">Current</div><div class="scard-val">${latest?latest.weight:'—'} <span class="scard-unit">kg</span></div></div>
+    <div class="scard"><div class="scard-lbl">Starting</div><div class="scard-val">${first?first.weight:'—'} <span class="scard-unit">kg</span></div></div>
+    <div class="scard"><div class="scard-lbl">Total change</div><div class="scard-val" style="color:${diff===null?'var(--text)':diff>0?'var(--red)':'var(--green)'}">${diff===null?'—':(diff>0?'+':'')+diff} <span class="scard-unit">kg</span></div></div>
+    <div class="scard"><div class="scard-lbl">Entries</div><div class="scard-val">${ws.length}</div></div>`;
+  const wrap=document.getElementById('chartWrap');
+  if(wChart){wChart.destroy();wChart=null}
+  wrap.innerHTML='<canvas id="weightChart"></canvas>';
+  if(ws.length>1){
+    wChart=new Chart(document.getElementById('weightChart'),{type:'line',data:{
+      labels:ws.map(e=>new Date(e.date).toLocaleDateString('en-GB',{day:'numeric',month:'short'})),
+      datasets:[{data:ws.map(e=>e.weight),borderColor:'#1D9E75',backgroundColor:'rgba(29,158,117,0.07)',borderWidth:2,pointBackgroundColor:'#1D9E75',pointRadius:4,tension:0.3,fill:true}]
+    },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.parsed.y} kg`}}},
+      scales:{y:{grid:{color:'rgba(128,128,128,0.08)'},ticks:{color:'#888',font:{size:11}}},x:{grid:{display:false},ticks:{color:'#888',font:{size:11},maxTicksLimit:7}}}}});
+  } else {
+    wrap.style.position='relative';
+    wrap.innerHTML+='<p style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:13px;color:var(--text3);text-align:center">Log 2+ entries to see chart</p>';
+  }
+  const lg=document.getElementById('weightLog');
+  if(!ws.length){lg.innerHTML='<p style="font-size:13px;color:var(--text2)">No entries yet.</p>';return}
+  lg.innerHTML=[...ws].reverse().map((e,ri,arr)=>{
+    const prev=arr[ri+1],delta=prev?+(e.weight-prev.weight).toFixed(1):null;
+    const timeStr=e.time?`<span style="font-size:10px;color:var(--text3);margin-left:4px">${e.time}</span>`:'';
+    return`<div class="log-row">
+      <div>
+        <div class="log-date">${new Date(e.date).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'})}${timeStr}</div>
+        ${e.note?`<div style="font-size:11px;color:var(--text3)">${e.note}</div>`:''}
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="log-w">${e.weight} kg</span>
+        ${delta!==null?`<span class="delta ${delta>0?'up':'dn'}">${delta>0?'+':''}${delta} kg</span>`:''}
+        <button onclick="deleteWeight('${e.date}')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;padding:2px" aria-label="delete"><i class="ti ti-x"></i></button>
+      </div></div>`;
+  }).join('');
+}
+
+// ── PROGRESS ─────────────────────────────────────────────────────────────────
+function renderProgress(){
+  // Effective plan per weekday this week (honours per-date overrides), so the streak
+  // row, counts and heatmap reflect changed plans — not the static weekday plan.
+  const eff=PLAN.map((d,i)=>planFor(weekDateFor(i)));
+  document.getElementById('streakRow').innerHTML=PLAN.map((d,i)=>
+    `<div class="sdot${S.dayDone[DK(i)]?' done':''}${eff[i].type==='rest'?' restday':''}" title="${d.day}: ${eff[i].name}">${S.dayDone[DK(i)]?'✓':d.day[0]}</div>`
+  ).join('');
+  const streak=eff.filter((p,i)=>p.type!=='rest'&&S.dayDone[DK(i)]).length;
+  const total=eff.filter(p=>p.type!=='rest').length;
+  document.getElementById('streakCount').textContent=`${streak} of ${total} workouts completed this week`;
+  const totalSets=Object.keys(S.sets).filter(k=>k.endsWith('_done')&&S.sets[k]).length;
+  const allWorkouts=Object.keys(S.dayDone).filter(k=>S.dayDone[k]).length;
+  const ws=S.weights, diff=ws.length>1?+(ws[ws.length-1].weight-ws[0].weight).toFixed(1):null;
+  document.getElementById('progressStats').innerHTML=`
+    <div class="scard"><div class="scard-lbl">Workouts this week</div><div class="scard-val">${streak}</div></div>
+    <div class="scard"><div class="scard-lbl">Workouts all-time</div><div class="scard-val">${allWorkouts}</div></div>
+    <div class="scard"><div class="scard-lbl">Sets logged</div><div class="scard-val">${totalSets}</div></div>
+    <div class="scard"><div class="scard-lbl">Weight check-ins</div><div class="scard-val">${ws.length}</div></div>
+    <div class="scard"><div class="scard-lbl">Weight change</div><div class="scard-val" style="color:${diff===null?'var(--text)':diff>0?'var(--red)':'var(--green)'}">${diff===null?'—':(diff>0?'+':'')+diff+' kg'}</div></div>`;
+  document.getElementById('heatmap').innerHTML=PLAN.map((d,i)=>
+    `<div class="hcell${S.dayDone[DK(i)]?' done':''}${eff[i].type==='rest'?' restday':''}" title="${d.day}: ${eff[i].name}">${S.dayDone[DK(i)]?'✓':eff[i].type==='rest'?'Z':''}</div>`
+  ).join('');
+  document.getElementById('progNotes').value=S.notes||'';
+  renderCalendar();
+}
+
+// ── CALENDAR ─────────────────────────────────────────────────────────────────
+let calY, calM, calSel=null;
+function addDaysYmd(ymd,n){const[y,m,d]=ymd.split('-').map(Number);return new Date(Date.UTC(y,m-1,d+n)).toISOString().slice(0,10)}
+function ymdDow(ymd){const[y,m,d]=ymd.split('-').map(Number);const w=new Date(Date.UTC(y,m-1,d)).getUTCDay();return w===0?6:w-1} // Mon=0
+// Reconstruct which calendar dates have logged activity from the week-namespaced keys.
+function activeDates(){
+  const out={};
+  const mark=(ymd,f)=>{(out[ymd]=out[ymd]||{}) [f]=true};
+  for(const k in S.dayDone){const m=k.match(/^(\d{4}-\d{2}-\d{2})_dd(\d)$/);if(m&&S.dayDone[k])mark(addDaysYmd(m[1],+m[2]),'done')}
+  for(const k in S.sets){const m=k.match(/^(\d{4}-\d{2}-\d{2})_d(\d)e/);if(m&&S.sets[k])mark(addDaysYmd(m[1],+m[2]),'has')}
+  return out;
+}
+// Date-scoped keys + write helpers, so any past (or future) day can be logged
+// retroactively, writing into that day's correct week namespace.
+function ymdMeta(ymd){const di=ymdDow(ymd);return{di,wm:addDaysYmd(ymd,-di)}}
+function kAt(ymd,ei,si,f){const m=ymdMeta(ymd);return`${m.wm}_d${m.di}e${ei}s${si}_${f}`}
+function dkAt(ymd){const m=ymdMeta(ymd);return`${m.wm}_dd${m.di}`}
+function setVAt(ymd,ei,si,f,v){S.sets[kAt(ymd,ei,si,f)]=v;save();renderCalendar()}
+function toggleSetAt(ymd,ei,si){const k=kAt(ymd,ei,si,'done');S.sets[k]=!S.sets[k];save();renderProgress()}
+function markDoneAt(ymd){const k=dkAt(ymd);S.dayDone[k]=!S.dayDone[k];save();renderProgress()}
+// Which plan applies to a date — the natural weekday plan, unless the user chose
+// to train on a rest day (override stored per date in S.dayPlan).
+function planIdxFor(ymd){return(S.dayPlan&&S.dayPlan[ymd]!=null)?S.dayPlan[ymd]:ymdDow(ymd)}
+function planFor(ymd){return PLAN[planIdxFor(ymd)]}
+function chooseRestWorkout(ymd,idx){S.dayPlan=S.dayPlan||{};S.dayPlan[ymd]=idx;save();renderProgress()}
+function clearRestWorkout(ymd){if(S.dayPlan)delete S.dayPlan[ymd];save();renderProgress()}
+// Swap the workout plan for any date from the dropdown. Picking the natural
+// weekday plan clears the override; any other choice (including Rest) sets it.
+function setDayPlan(ymd,idx){
+  idx=+idx; S.dayPlan=S.dayPlan||{};
+  if(idx===ymdDow(ymd))delete S.dayPlan[ymd]; else S.dayPlan[ymd]=idx;
+  save();renderProgress();
+}
+// Time-of-day for a workout (optional), stored per date in S.dayTime.
+function setDayTime(ymd,v){S.dayTime=S.dayTime||{};if(v)S.dayTime[ymd]=v;else delete S.dayTime[ymd];save();renderProgress()}
+// Per-workout notes, stored per DATE (not weekday) so they don't bleed across weeks.
+function dayNoteOf(ymd){return(S.dayNotes&&S.dayNotes[ymd])||''}
+function setDayNote(ymd,v){S.dayNotes=S.dayNotes||{};if(v)S.dayNotes[ymd]=v;else delete S.dayNotes[ymd];save()}
+// Reschedule: move a logged/completed workout (all its sets, done flag, plan
+// override and time) from one date to another. Keys are weekday-namespaced, so we
+// copy field-by-field for the plan that was on the old date, then pin that plan to
+// the new date so the moved data still lines up with the right exercises.
+function moveWorkout(oldYmd,newYmd){
+  if(!newYmd||oldYmd===newYmd){renderProgress();return}
+  if(activeDates()[newYmd]&&!confirm('That date already has a logged workout. Overwrite it with this one?')){renderProgress();return}
+  const planIdx=planIdxFor(oldYmd), D=PLAN[planIdx];
+  D.exercises.forEach((ex,ei)=>{for(let s=0;s<ex.sets;s++){['reps','weight','ease','done'].forEach(f=>{
+    const ok=kAt(oldYmd,ei,s,f);
+    if(S.sets[ok]!==undefined){S.sets[kAt(newYmd,ei,s,f)]=S.sets[ok];delete S.sets[ok]}
+  })}});
+  if(S.dayDone[dkAt(oldYmd)]){S.dayDone[dkAt(newYmd)]=S.dayDone[dkAt(oldYmd)];delete S.dayDone[dkAt(oldYmd)]}
+  S.dayPlan=S.dayPlan||{};
+  if(planIdx!==ymdDow(newYmd))S.dayPlan[newYmd]=planIdx; else delete S.dayPlan[newYmd];
+  if(S.dayPlan[oldYmd]!=null)delete S.dayPlan[oldYmd];
+  S.dayTime=S.dayTime||{};
+  if(S.dayTime[oldYmd]){S.dayTime[newYmd]=S.dayTime[oldYmd];delete S.dayTime[oldYmd]}
+  save(); calSel=newYmd; renderProgress();
+}
+const ZZZ_SVG=`<svg class="zzz-svg" viewBox="0 0 140 96" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <circle cx="118" cy="20" r="2" fill="var(--accent)" opacity=".7"/>
+  <circle cx="30" cy="16" r="1.6" fill="var(--accent)" opacity=".5"/>
+  <circle cx="104" cy="44" r="1.4" fill="var(--accent)" opacity=".4"/>
+  <path d="M58 30a26 26 0 1 0 24 40 30 30 0 0 1-24-40z" fill="var(--accent)" opacity=".9"/>
+  <text x="86" y="34" font-size="15" font-weight="700" fill="var(--accent)">Z</text>
+  <text x="98" y="24" font-size="11" font-weight="700" fill="var(--accent)" opacity=".75">z</text>
+  <text x="107" y="16" font-size="8" font-weight="700" fill="var(--accent)" opacity=".5">z</text>
+</svg>`;
+const CELL_MOON=`<svg class="cz" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 12.8A8.5 8.5 0 1 1 11.2 3a6.6 6.6 0 0 0 9.8 9.8z"/></svg>`;
+function exBlockHTML(ymd,ex,ei){
+  const isBody=isBodyweight(ex);
+  const rows=Array.from({length:ex.sets},(_,s)=>{
+    const dn=S.sets[kAt(ymd,ei,s,'done')]||false;
+    return`<div class="setrow">
+      <div class="sn">${s+1}</div>
+      <select class="sinput" onchange="setVAt('${ymd}',${ei},${s},'reps',this.value)" aria-label="reps">${selOpts(REPS_OPTS,S.sets[kAt(ymd,ei,s,'reps')])}</select>
+      ${weightCell(isBody,S.sets[kAt(ymd,ei,s,'weight')],`setVAt('${ymd}',${ei},${s},'weight',this.value)`)}
+      <select class="sinput" onchange="setVAt('${ymd}',${ei},${s},'ease',this.value)" aria-label="ease">${selOpts(EASE_OPTS,S.sets[kAt(ymd,ei,s,'ease')])}</select>
+      <div class="scheck${dn?' done':''}" onclick="toggleSetAt('${ymd}',${ei},${s})" role="checkbox" aria-checked="${dn}" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleSetAt('${ymd}',${ei},${s})}">${dn?'✓':''}</div>
+    </div>`;
+  }).join('');
+  return`<div class="cd-exblock"><div class="cd-exname">${ex.name}<span class="cd-exmeta">${ex.sets}×${ex.reps} · ${ex.meta}</span></div>
+    <div class="sets-hd"><span></span><span>Reps</span><span>Weight</span><span>Ease</span><span></span></div>
+    ${rows}</div>`;
+}
+function dayDetailHTML(ymd){
+  const D=planFor(ymd), done=!!S.dayDone[dkAt(ymd)];
+  const naturalIdx=ymdDow(ymd), naturalName=PLAN[naturalIdx].name;
+  const overridden=planIdxFor(ymd)!==naturalIdx;
+  const dObj=new Date(ymd+'T00:00:00');
+  const dateBig=dObj.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
+  const future=ymd>ymdLocal(new Date());
+  const planSelect=`<select class="cd-plan" onchange="setDayPlan('${ymd}',this.value)" aria-label="Workout plan for this day">`+
+    PLAN.map((p,i)=>`<option value="${i}"${i===planIdxFor(ymd)?' selected':''}>${p.name}</option>`).join('')+`</select>`;
+  const dayTime=(S.dayTime&&S.dayTime[ymd])||'';
+  let h=`<div class="cd-head"><div class="cd-datewrap">
+      <div class="cd-date">${dateBig}${dayTime?` · ${dayTime}`:''}</div>
+      <div class="cd-title">${D.name}${overridden?` <span class="cd-tag">changed from ${naturalName}</span>`:''}</div>
+      <div class="cd-focus">${D.focus}</div>
+    </div>
+    <button class="cal-nav" onclick="calPick('${ymd}')" title="Close" aria-label="Close"><i class="ti ti-x"></i></button></div>`;
+  h+=`<div class="cd-schedrow">
+      <label class="cd-field"><span>Date</span><input type="date" value="${ymd}" onchange="moveWorkout('${ymd}',this.value)"></label>
+      <label class="cd-field"><span>Time</span><input type="time" value="${dayTime}" onchange="setDayTime('${ymd}',this.value)"></label>
+    </div>`;
+  h+=`<div class="cd-planrow"><span class="cd-planlbl">Workout plan</span>${planSelect}${overridden?`<button class="cd-resetplan" onclick="setDayPlan('${ymd}',${naturalIdx})" title="Reset to ${naturalName}"><i class="ti ti-rotate"></i></button>`:''}</div>`;
+  if(future)h+=`<div class="cd-future"><i class="ti ti-info-circle"></i> This day is in the future.</div>`;
+  if(!D.exercises.length){
+    // Rest plan selected → zzz screen (the dropdown above switches to a workout)
+    h+=`<div class="cd-rest">${ZZZ_SVG}
+      <div class="cd-rest-msg">Catch some zzz's</div>
+      <div class="cd-rest-sub">Recovery is where the gains settle in.</div>
+      <div class="cd-altlabel">Feeling it? Pick a workout from the plan dropdown above.</div>
+    </div>`;
+    return h;
+  }
+  h+=D.exercises.map((ex,ei)=>exBlockHTML(ymd,ex,ei)).join('');
+  h+=`<div class="slabel">Workout notes</div><textarea class="finput" rows="3" placeholder="How did it feel? PRs? Adjustments…" style="width:100%;resize:none" oninput="setDayNote('${ymd}',this.value)">${dayNoteOf(ymd)}</textarea>`;
+  h+=`<button class="cd-done${done?' on':''}" onclick="markDoneAt('${ymd}')">${done?'✓ Workout complete':'Mark workout complete'}</button>`;
+  return h;
+}
+function calMove(n){calM+=n;if(calM<0){calM=11;calY--}if(calM>11){calM=0;calY++}calSel=null;renderCalendar()}
+function calPick(ymd){calSel=calSel===ymd?null:ymd;renderCalendar();if(calSel){const el=document.getElementById('calDetail');if(el)requestAnimationFrame(()=>el.scrollIntoView({behavior:'smooth',block:'nearest'}))}}
+function renderCalendar(){
+  if(calY===undefined){const d=new Date();calY=d.getFullYear();calM=d.getMonth()}
+  const MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('calTitle').textContent=`${MN[calM]} ${calY}`;
+  const act=activeDates(), today=ymdLocal(new Date());
+  const first=`${calY}-${String(calM+1).padStart(2,'0')}-01`;
+  const lead=ymdDow(first), nDays=new Date(calY,calM+1,0).getDate();
+  let cells='';
+  for(let i=0;i<lead;i++)cells+='<div class="ccell empty"></div>';
+  for(let d=1;d<=nDays;d++){
+    const ymd=`${calY}-${String(calM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const a=act[ymd];
+    const P=planFor(ymd), tkey=P.name.split(' ')[0].toLowerCase();
+    const cls=['ccell','t-'+tkey,a?'has':'',a&&a.done?'done':'',P.type==='rest'?'rest':'',ymd===today?'today':'',ymd===calSel?'sel':''].filter(Boolean).join(' ');
+    const mark=a?`<span class="cmark"><i class="${a.done?'dn':''}"></i></span>`:'';
+    const SHOW=3, more=P.exercises.length-SHOW;
+    const exList=P.exercises.length
+      ?`<ul class="cexs">${P.exercises.slice(0,SHOW).map(e=>`<li>${e.name}</li>`).join('')}${more>0?`<li class="cmore">+${more} more</li>`:''}</ul>`
+      :(P.type==='rest'?`<div class="crest">${CELL_MOON}<span>Zzz</span></div>`:'');
+    cells+=`<div class="${cls}" onclick="calPick('${ymd}')">`+
+      `<div class="ctop"><span class="cnum">${d}</span>${mark}</div>`+
+      `<div class="ctype">${P.name.split(' ')[0]}</div>${exList}</div>`;
+  }
+  document.getElementById('calGrid').innerHTML=cells;
+  const det=document.getElementById('calDetail');
+  det.innerHTML=calSel?dayDetailHTML(calSel):'';
+}
+
+// ── MEASUREMENTS ──────────────────────────────────────────────────────────────
+// Body measurements for tracking muscle growth. Each has a how-to (steps) and a
+// looping SVG guide (animated tape band on a figure). If a real demo GIF is dropped
+// Each card's demo is a zoomed close-up SVG diagram of the body part with an amber
+// tape-measure band wrapped at the exact spot to measure (measDiagram via `region`).
+// Fully offline, no copyright. The old `anim` exercise-GIF mapping was dropped because
+// the clips didn't depict the measurement area; `anim` fields below are now unused.
+const MEASURES=[
+  {key:'neck',name:'Neck',region:'neck',anim:'press',tip:'Around the middle of your neck',steps:['Stand tall and relax your shoulders.','Wrap the tape around the middle of your neck, below the Adam’s apple.','Keep it level and snug, not tight. Read on a normal breath.']},
+  {key:'shoulders',name:'Shoulders',region:'shoulders',anim:'raise',tip:'Widest point across the deltoids',steps:['Stand relaxed with arms at your sides.','Wrap the tape around the widest part of your shoulders/deltoids.','Keep the tape level all the way around and read the value.']},
+  {key:'chest',name:'Chest',region:'chest',anim:'fly',tip:'Fullest part, across the nipple line',steps:['Stand tall, arms relaxed at your sides.','Wrap the tape around the fullest part of your chest, level with the nipples.','Breathe normally (don’t puff up) and read at the end of a relaxed exhale.']},
+  {key:'upperArmL',name:'Upper arm (L)',region:'armL',anim:'curl',tip:'Flexed bicep, largest point',steps:['Raise your left arm and flex the bicep.','Wrap the tape around the largest part of the upper arm.','Keep it snug and read at peak flex.']},
+  {key:'upperArmR',name:'Upper arm (R)',region:'armR',anim:'concurl',tip:'Flexed bicep, largest point',steps:['Raise your right arm and flex the bicep.','Wrap the tape around the largest part of the upper arm.','Keep it snug and read at peak flex.']},
+  {key:'forearmL',name:'Forearm (L)',region:'forearmL',anim:'hammer',tip:'Largest point below the elbow',steps:['Extend your left arm, make a loose fist.','Wrap the tape around the widest part of the forearm.','Keep it level and read the value.']},
+  {key:'forearmR',name:'Forearm (R)',region:'forearmR',anim:'hammer',tip:'Largest point below the elbow',steps:['Extend your right arm, make a loose fist.','Wrap the tape around the widest part of the forearm.','Keep it level and read the value.']},
+  {key:'waist',name:'Waist',region:'waist',anim:'twist',tip:'Narrowest point, around the navel',steps:['Stand relaxed, don’t suck in your stomach.','Wrap the tape around the narrowest part of your waist (around the navel).','Keep it level and read at the end of a normal exhale.']},
+  {key:'hips',name:'Hips',region:'hips',anim:'bridge',tip:'Widest point of the glutes',steps:['Stand with feet together.','Wrap the tape around the widest part of your hips/glutes.','Keep it level all the way around and read the value.']},
+  {key:'thighL',name:'Thigh (L)',region:'thighL',anim:'squat',tip:'Largest point, just below the glute',steps:['Stand with weight even on both feet.','Wrap the tape around the largest part of the upper thigh, just below the glute.','Keep it level and read the value.']},
+  {key:'thighR',name:'Thigh (R)',region:'thighR',anim:'lunge',tip:'Largest point, just below the glute',steps:['Stand with weight even on both feet.','Wrap the tape around the largest part of the upper thigh, just below the glute.','Keep it level and read the value.']},
+  {key:'calfL',name:'Calf (L)',region:'calfL',anim:'calf',tip:'Largest point of the calf',steps:['Stand or sit with the foot flat.','Wrap the tape around the widest part of the calf.','Keep it snug and level, then read.']},
+  {key:'calfR',name:'Calf (R)',region:'calfR',anim:'calf',tip:'Largest point of the calf',steps:['Stand or sit with the foot flat.','Wrap the tape around the widest part of the calf.','Keep it snug and level, then read.']}
+];
+// region (armL/armR/forearmL/…) → shared diagram part. Left & right use the same
+// close-up; the card label says which side.
+// ── Original stick figure + per-region band (first iteration) ────────────────
+// A simple stick figure (circle head, neck, trapezoid torso, rectangle arms/legs)
+// with a blue animated dashed ellipse that moves to the right body part per region.
+// Shared figure; band position table `B` is keyed by the full region (incl. L/R).
+function measSVG(region){
+  const B={neck:[60,31,9,4],shoulders:[60,40,26,5],chest:[60,54,22,6],waist:[60,76,16,5],hips:[60,92,21,6],armL:[34,58,7,4],armR:[86,58,7,4],forearmL:[29,82,5,4],forearmR:[91,82,5,4],thighL:[50,112,8,5],thighR:[70,112,8,5],calfL:[49,136,6,4],calfR:[71,136,6,4]}[region]||[60,54,22,6];
+  const cx=B[0],cy=B[1],rx=B[2],ry=B[3];
+  return `<svg class="exfig measfig" viewBox="0 0 120 150" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">`+
+    `<g fill="var(--fig)" opacity="0.85">`+
+    `<circle cx="60" cy="16" r="10"/><rect x="56" y="24" width="8" height="8" rx="2"/>`+
+    `<path d="M44,33 L76,33 L72,72 L70,93 L50,93 L48,72 Z"/>`+
+    `<rect x="32" y="35" width="8" height="46" rx="4"/><rect x="80" y="35" width="8" height="46" rx="4"/>`+
+    `<rect x="48" y="92" width="11" height="54" rx="5"/><rect x="61" y="92" width="11" height="54" rx="5"/>`+
+    `</g>`+
+    `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="none" stroke="var(--accent)" stroke-width="6" opacity="0.13"/>`+
+    `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-dasharray="4 4" stroke-linecap="round">`+
+    `<animate attributeName="stroke-dashoffset" from="0" to="16" dur="1.1s" repeatCount="indefinite"/></ellipse></svg>`;
+}
+function measAnimHTML(m){return measSVG(m.region);}
+function measStepsHTML(m){const lis=m.steps.map(s=>'<li>'+s.replace(/</g,'&lt;')+'</li>').join('');return '<div class="howto-hd"><i class="ti ti-list-numbers" aria-hidden="true"></i> How to measure</div><ol class="howto">'+lis+'</ol>';}
+function measName(k){const m=MEASURES.find(x=>x.key===k);return m?m.name:k}
+function setMeasDraft(key,v){S.measDraft=S.measDraft||{vals:{}};S.measDraft.vals=S.measDraft.vals||{};if(v!=='')S.measDraft.vals[key]=v;else delete S.measDraft.vals[key];save()}
+function setMeasMeta(f,v){S.measDraft=S.measDraft||{vals:{}};S.measDraft[f]=v;save()}
+function toggleMeas(key){S['mo_'+key]=!S['mo_'+key];const b=document.getElementById('measbody_'+key);if(b)b.classList.toggle('open',!!S['mo_'+key]);const c=document.querySelector('#mcard_'+key+' .ex-chev');if(c)c.classList.toggle('open',!!S['mo_'+key])}
+function saveMeasure(){
+  const d=S.measDraft||{vals:{}}, vals={};
+  Object.keys(d.vals||{}).forEach(k=>{const n=parseFloat(d.vals[k]);if(!isNaN(n)&&n>0)vals[k]=n});
+  if(!Object.keys(vals).length){alert('Enter at least one measurement.');return}
+  const date=d.date||ymdLocal(new Date()), time=d.time||new Date().toTimeString().slice(0,5);
+  S.measurements=(S.measurements||[]).filter(e=>!(e.date===date&&e.time===time));
+  S.measurements.push({date,time,note:(d.note||'').trim(),m:vals});
+  S.measurements.sort((a,b)=>(a.date+(a.time||'')).localeCompare(b.date+(b.time||'')));
+  S.measDraft={date,time,note:'',vals:{}};
+  save();renderMeasure();
+}
+function deleteMeasEntry(date,time){S.measurements=(S.measurements||[]).filter(e=>!(e.date===date&&(e.time||'')===time));save();renderMeasure()}
+function setMeasChart(k){S.measChartKey=k;save();renderMeasChart()}
+let mChart=null;
+function renderMeasChart(){
+  const sel=document.getElementById('measChartSel'), wrap=document.getElementById('measChartWrap');
+  const withData=MEASURES.filter(mm=>(S.measurements||[]).some(e=>e.m&&e.m[mm.key]!=null));
+  if(mChart){mChart.destroy();mChart=null}
+  if(!withData.length){sel.style.display='none';sel.innerHTML='';wrap.innerHTML='<p class="meas-empty">Log measurements over time to see growth charts.</p>';return}
+  sel.style.display='';
+  if(!S.measChartKey||!withData.some(m=>m.key===S.measChartKey))S.measChartKey=withData[0].key;
+  sel.innerHTML=withData.map(m=>`<option value="${m.key}"${m.key===S.measChartKey?' selected':''}>${m.name}</option>`).join('');
+  const pts=S.measurements.filter(e=>e.m&&e.m[S.measChartKey]!=null);
+  wrap.innerHTML='<canvas id="measChartCanvas"></canvas>';wrap.style.position='relative';
+  if(pts.length<2){wrap.innerHTML+='<p class="meas-empty" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)">Need 2+ entries for '+measName(S.measChartKey)+'.</p>';return}
+  mChart=new Chart(document.getElementById('measChartCanvas'),{type:'line',data:{
+    labels:pts.map(e=>new Date(e.date).toLocaleDateString('en-GB',{day:'numeric',month:'short'})),
+    datasets:[{data:pts.map(e=>e.m[S.measChartKey]),borderColor:'#1D9E75',backgroundColor:'rgba(29,158,117,0.07)',borderWidth:2,pointBackgroundColor:'#1D9E75',pointRadius:4,tension:0.3,fill:true}]
+  },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.y+' cm'}}},
+    scales:{y:{grid:{color:'rgba(128,128,128,0.08)'},ticks:{color:'#888',font:{size:11},callback:v=>v+' cm'}},x:{grid:{display:false},ticks:{color:'#888',font:{size:11},maxTicksLimit:7}}}}});
+}
+function renderMeasLog(){
+  const lg=document.getElementById('measLog'), es=S.measurements||[];
+  if(!es.length){lg.innerHTML='<p class="meas-empty">No measurements logged yet.</p>';return}
+  lg.innerHTML=[...es].reverse().map((e,ri,arr)=>{
+    const prev=arr[ri+1];
+    const cells=Object.keys(e.m).map(k=>{
+      let delta='';
+      if(prev&&prev.m&&prev.m[k]!=null){const dd=+(e.m[k]-prev.m[k]).toFixed(1);if(dd!==0)delta=` <span class="delta ${dd>0?'dn':'up'}">${dd>0?'+':''}${dd}</span>`;}
+      return `<div class="meas-cell"><span class="meas-cl">${measName(k)}</span><span class="meas-cv">${e.m[k]} cm${delta}</span></div>`;
+    }).join('');
+    return `<div class="meas-entry"><div class="meas-ehead"><div><b>${new Date(e.date).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'})}</b> <span class="log-date">${e.time||''}</span>${e.note?`<div style="font-size:11px;color:var(--text3)">${e.note.replace(/</g,'&lt;')}</div>`:''}</div><button class="meas-del" onclick="deleteMeasEntry('${e.date}','${e.time||''}')" aria-label="delete entry"><i class="ti ti-x"></i></button></div><div class="meas-grid">${cells}</div></div>`;
+  }).join('');
+}
+function renderMeasure(){
+  S.measurements=S.measurements||[];S.measDraft=S.measDraft||{vals:{}};
+  const d=S.measDraft, today=ymdLocal(new Date()), now=new Date().toTimeString().slice(0,5);
+  document.getElementById('measForm').innerHTML=`<div class="wform" style="margin-bottom:0">
+    <div class="fg"><label class="flabel">Date</label><input class="finput" type="date" value="${d.date||today}" onchange="setMeasMeta('date',this.value)"></div>
+    <div class="fg" style="max-width:120px"><label class="flabel">Time</label><input class="finput" type="time" value="${d.time||now}" onchange="setMeasMeta('time',this.value)"></div>
+    <div class="fg"><label class="flabel">Note</label><input class="finput" type="text" placeholder="morning, fasted…" value="${(d.note||'').replace(/"/g,'&quot;')}" oninput="setMeasMeta('note',this.value)"></div>
+  </div>`;
+  document.getElementById('measCards').innerHTML=MEASURES.map(mm=>{
+    const open=S['mo_'+mm.key], val=(d.vals&&d.vals[mm.key]!=null)?d.vals[mm.key]:'';
+    return `<div class="excard" id="mcard_${mm.key}">
+      <div class="exhead" onclick="toggleMeas('${mm.key}')" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleMeas('${mm.key}')}">
+        <div class="ex-anims">${measAnimHTML(mm)}</div>
+        <div class="ex-info">
+          <div class="ex-name">${mm.name}</div>
+          <div class="ex-tip">${mm.tip}</div>
+        </div>
+        <div class="meas-inrow"><input class="finput meas-input" type="number" inputmode="decimal" step="0.1" min="0" placeholder="—" value="${val}" onclick="event.stopPropagation()" oninput="setMeasDraft('${mm.key}',this.value)" aria-label="${mm.name} in cm"><span class="meas-unit">cm</span></div>
+        <div class="ex-chev${open?' open':''}" aria-hidden="true"><i class="ti ti-chevron-down"></i></div>
+      </div>
+      <div class="exbody${open?' open':''}" id="measbody_${mm.key}">${measStepsHTML(mm)}</div>
+    </div>`;
+  }).join('');
+  renderMeasChart();renderMeasLog();
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+load();
+// Recover pre-dating history once. Legacy keys are at least a week old, so stamp
+// them with last week's Monday — landing each on its original weekday.
+if(!S.legacyMigrated){
+  const lastWk=new Date();lastWk.setDate(lastWk.getDate()-7);
+  if(migrateLegacyKeys(weekKey(lastWk))>0)console.info('FitTrack: recovered pre-update workout history.');
+  S.legacyMigrated=true;save();
+}
+// One-time: the old weekKey() could land on Sunday (timezone bug), so some keys were
+// prefixed with the week's Sunday instead of Monday — making them show a day early.
+// Normalize any Sunday-prefixed week keys to the correct Monday (+1 day), without
+// clobbering keys that are already correctly placed.
+if(!S.tzWeekFix){
+  let n=0;
+  const bump=obj=>{for(const k of Object.keys(obj)){const m=k.match(/^(\d{4}-\d{2}-\d{2})_(.+)$/);
+    if(m&&ymdDow(m[1])===6){const nk=addDaysYmd(m[1],1)+'_'+m[2];if(!(nk in obj)){obj[nk]=obj[k];delete obj[k];n++}}}};
+  bump(S.sets);bump(S.dayDone);
+  if(n>0)console.info('FitTrack: corrected '+n+' mis-dated workout keys (timezone fix).');
+  S.tzWeekFix=true;save();
+}
+// Most recent date with weekday i (Mon=0) STRICTLY before today — the best guess for
+// where a flat (weekday-only) note was last written.
+function recentWeekdayDate(i){const today=ymdLocal(new Date());let delta=(ymdDow(today)-i+7)%7;if(delta===0)delta=7;return addDaysYmd(today,-delta)}
+// Workout notes used to be keyed by weekday only (`d{i}_notes`) so they bled across
+// weeks. Move any such flat notes onto the most recent matching date before today.
+if(!S.dayNotesMigrated){
+  S.dayNotes=S.dayNotes||{};
+  for(let i=0;i<7;i++){const k='d'+i+'_notes';if(S[k]){const ymd=recentWeekdayDate(i);if(!S.dayNotes[ymd])S.dayNotes[ymd]=S[k];delete S[k]}}
+  S.dayNotesMigrated=true;save();
+}
+// Corrective pass: an earlier build migrated flat notes onto LAST week's date (wrong
+// for notes written this week, e.g. a Tuesday note ending up a week early). Re-home
+// any note sitting on last week's slot to the correct most-recent date, if free.
+if(!S.dayNotesFix2){
+  S.dayNotes=S.dayNotes||{};
+  const lw=new Date();lw.setDate(lw.getDate()-7);const lwMon=weekKey(lw);
+  for(let i=0;i<7;i++){const oldLoc=addDaysYmd(lwMon,i),newLoc=recentWeekdayDate(i);
+    if(oldLoc!==newLoc&&S.dayNotes[oldLoc]&&!S.dayNotes[newLoc]){S.dayNotes[newLoc]=S.dayNotes[oldLoc];delete S.dayNotes[oldLoc]}}
+  S.dayNotesFix2=true;save();
+}
+S.currentDay=new Date().getDay()===0?6:new Date().getDay()-1;
+document.getElementById('wi-date').value=ymdLocal(new Date());
+document.getElementById('wi-time').value=new Date().toTimeString().slice(0,5);
+document.getElementById('topDate').textContent=new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
+applyLayout();
+renderWorkout();
+renderWeight();
+// PWA: offline caching (needs HTTPS or localhost; silently skipped otherwise)
+if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}
+</script>
+</body>
+</html>

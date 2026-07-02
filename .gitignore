@@ -1,0 +1,10 @@
+# secrets — Ultrahuman API token lives here
+uh-config.json
+# personal workout data backups
+fittrack-backup-*.json
+# local dev server & docs (not part of the deployed app)
+serve.ps1
+setup-lan.ps1
+FITTRACK_CONTEXT.md
+exmedia.json
+.claude/
