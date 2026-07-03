@@ -367,7 +367,8 @@ button,select,input{touch-action:manipulation}
     <div style="display:flex;gap:10px;flex-wrap:wrap">
       <button class="data-btn" onclick="exportData()"><i class="ti ti-download" aria-hidden="true"></i> Save progress</button>
       <button class="data-btn ghost" onclick="document.getElementById('importFile').click()"><i class="ti ti-upload" aria-hidden="true"></i> Load progress</button>
-      <input type="file" id="importFile" accept="application/json,.json" style="display:none" onchange="importData(this)">
+      <!-- no accept filter: phone pickers grey out .json files whose MIME isn't exactly application/json; importData validates content itself -->
+      <input type="file" id="importFile" style="display:none" onchange="importData(this)">
     </div>
     <div id="dataMsg" style="font-size:12px;margin-top:8px;color:var(--green)"></div>
   </div>
