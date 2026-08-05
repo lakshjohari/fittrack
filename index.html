@@ -37,7 +37,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .shell.wide{max-width:1180px}
 /* Wide / desktop multi-column layouts (only when wide mode is on) */
 .shell.wide #workoutPane{display:grid;grid-template-columns:repeat(2,1fr);gap:.7rem;align-items:start}
-.shell.wide #workoutPane>.slabel,.shell.wide #workoutPane>textarea,.shell.wide #workoutPane>.wk-planrow{grid-column:1/-1}
+.shell.wide #workoutPane>.slabel,.shell.wide #workoutPane>textarea,.shell.wide #workoutPane>.wk-planrow,.shell.wide #workoutPane>.addex-row{grid-column:1/-1}
 .shell.wide #workoutPane>.excard{margin-bottom:0}
 .shell.wide #pane-weight.active{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;align-items:start}
 .shell.wide #pane-weight.active>.card:first-child,.shell.wide #pane-weight.active>.stats-g{grid-column:1/-1}
@@ -92,6 +92,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .ex-name{font-size:16px;font-weight:600;margin-bottom:3px}
 .ex-meta{font-size:12.5px;color:var(--text2);margin-bottom:3px}
 .ex-tip{font-size:12.5px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-style:italic}
+.ex-del{align-self:center;flex-shrink:0;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;border:0.5px solid var(--border);border-radius:50%;background:var(--bg2);color:var(--text3);cursor:pointer;font-size:14px;padding:0}
+.ex-del:hover{color:var(--red);border-color:var(--red)}
+.cd-exname .ex-del{width:24px;height:24px;font-size:12px;margin-left:auto}
+.addex-row{margin-top:.65rem}
 .ex-chev{display:flex;align-items:center;padding:0 12px;color:var(--text3);font-size:20px;transition:transform .2s}
 .ex-chev.open{transform:rotate(180deg)}
 .exbody{display:none;padding:10px 13px;border-top:0.5px solid var(--border)}
@@ -564,15 +568,16 @@ function renderWorkout(){
     (overridden?`<button class="cd-resetplan" onclick="setWorkoutPlan(${i},${i})" title="Reset to ${PLAN[i].name}"><i class="ti ti-rotate"></i></button>`:'')+`</div>`;
 
   const pane=document.getElementById('workoutPane');
-  if(D.type==='rest'){
-    pane.innerHTML=planBar+`<div class="rest-view"><i class="ti ti-zzz rest-icon"></i><h3>Rest — ${D.focus}</h3><p style="font-size:13px">Light walking, stretching, or foam rolling. Pick a workout from the Plan dropdown to train instead.</p></div>`;
+  const allEx=dayAllEx(ymd);
+  if(D.type==='rest'&&!allEx.length){
+    pane.innerHTML=planBar+`<div class="rest-view"><i class="ti ti-zzz rest-icon"></i><h3>Rest — ${D.focus}</h3><p style="font-size:13px">Light walking, stretching, or foam rolling. Pick a workout from the Plan dropdown to train instead.</p></div>`+addExSelectHTML(ymd,'w');
     document.getElementById('progFill').style.width='0%';
     document.getElementById('progLabel').textContent='Rest day';
     const b=document.getElementById('doneBtn');b.textContent='Rest day';b.disabled=true;initFigures();return;
   }
 
   let total=0,done=0;
-  D.exercises.forEach((ex,ei)=>{for(let s=0;s<ex.sets;s++){total++;if(S.sets[K(i,ei,s,'done')])done++}});
+  allEx.forEach(([ex,ei])=>{for(let s=0;s<ex.sets;s++){total++;if(S.sets[K(i,ei,s,'done')])done++}});
   const pct=total?Math.round(done/total*100):0;
   document.getElementById('progFill').style.width=pct+'%';
   document.getElementById('progLabel').textContent=`${done} of ${total} sets complete`;
@@ -580,7 +585,7 @@ function renderWorkout(){
   b.textContent=S.dayDone[DK(i)]?'✓ Workout complete!':'Mark workout complete';
   b.disabled=!!S.dayDone[DK(i)];
 
-  pane.innerHTML=planBar+D.exercises.map((baseEx,ei)=>{
+  const exCardHTML=([baseEx,ei])=>{
     const ex=exEff(baseEx);
     const curSub=baseEx.alts?((S.exSwap&&S.exSwap[baseEx.name]!=null)?S.exSwap[baseEx.name]:''):'';
     const open=S['open_'+i+'_'+ei];
@@ -600,10 +605,11 @@ function renderWorkout(){
       <div class="exhead" onclick="toggleEx(${i},${ei})" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' ')toggleEx(${i},${ei})">
         <div class="ex-anims">${getAnimHTML(ex.anim)}</div>
         <div class="ex-info">
-          <div class="ex-name">${ex.name}</div>
+          <div class="ex-name">${ex.name}${ei>=EXB?' <span class="cd-tag">added</span>':''}</div>
           <div class="ex-meta">${ex.meta} · ${ex.sets}×${ex.reps}</div>
           <div class="ex-tip">${ex.tip}</div>
         </div>
+        ${ei>=EXB?`<button class="ex-del" onclick="event.stopPropagation();removeExtraExercise('${ymd}',${ei-EXB},'w')" title="Remove added exercise" aria-label="Remove added exercise"><i class="ti ti-x"></i></button>`:''}
         <div class="ex-chev${open?' open':''}" aria-hidden="true"><i class="ti ti-chevron-down"></i></div>
       </div>
       <div class="exbody${open?' open':''}" id="exbody_${ei}">
@@ -617,7 +623,8 @@ function renderWorkout(){
         <div class="rest-hint"><i class="ti ti-clock" style="font-size:12px" aria-hidden="true"></i> Rest ${ex.rest} between sets</div>
       </div>
     </div>`;
-  }).join('')+`<div class="slabel">Workout notes</div>
+  };
+  pane.innerHTML=planBar+allEx.map(exCardHTML).join('')+addExSelectHTML(ymd,'w')+`<div class="slabel">Workout notes</div>
   <textarea class="finput" rows="3" placeholder="How did it feel? PRs? Adjustments…" style="width:100%;resize:none" oninput="setDayNote('${ymd}',this.value)">${dayNoteOf(ymd)}</textarea>`;
   initFigures();
 }
@@ -631,8 +638,49 @@ function toggleEx(di,ei){
 // Keyed by the base exercise's name so the choice persists across weeks; the set
 // slot (i,ei) is unchanged, so logged sets stay with that slot.
 function exEff(base){const m=S.exSwap&&S.exSwap[base.name];return (base.alts&&m!=null&&base.alts[m])?base.alts[m]:base;}
+// ── EXTRA EXERCISES: add any PLAN exercise to a specific date ────────────────
+// S.dayExtra[ymd] = ["di:ei", ...] references into PLAN. Set data logs at
+// exercise index EXB+j so it can never collide with the day's own plan indices.
+const EXB=100, EXF=['reps','weight','ease','done'], EXMAXS=12;
+function extraRefs(ymd){return(S.dayExtra&&S.dayExtra[ymd])||[]}
+function extraExercises(ymd){return extraRefs(ymd).map(r=>{const[d,e]=r.split(':').map(Number);return PLAN[d]&&PLAN[d].exercises[e]}).filter(Boolean)}
+// All exercises for a date as [exercise, keyIndex] pairs (plan + extras).
+function dayAllEx(ymd){return planFor(ymd).exercises.map((e,ei)=>[e,ei]).concat(extraExercises(ymd).map((e,j)=>[e,EXB+j]))}
+function addExtraExercise(ymd,ref,src){
+  if(!ref)return;
+  S.dayExtra=S.dayExtra||{};(S.dayExtra[ymd]=S.dayExtra[ymd]||[]).push(ref);save();
+  src==='w'?renderWorkout():renderProgress();
+}
+function removeExtraExercise(ymd,j,src){
+  const refs=[...extraRefs(ymd)], ex=extraExercises(ymd)[j]; if(!ex)return;
+  let hasData=false;
+  for(let s=0;s<EXMAXS;s++)EXF.forEach(f=>{if(S.sets[kAt(ymd,EXB+j,s,f)]!==undefined)hasData=true});
+  if(hasData&&!confirm(`Remove "${ex.name}" and its logged sets for this day?`))return;
+  // snapshot every extra slot's data, splice out j, rewrite compacted
+  const snap=refs.map((_,k)=>{const o={};for(let s=0;s<EXMAXS;s++)EXF.forEach(f=>{
+    const key=kAt(ymd,EXB+k,s,f);
+    if(S.sets[key]!==undefined){o[s+'_'+f]=S.sets[key];delete S.sets[key]}
+  });return o});
+  refs.splice(j,1);snap.splice(j,1);
+  snap.forEach((o,k)=>{for(const kk in o){const[s,f]=kk.split('_');S.sets[kAt(ymd,EXB+k,+s,f)]=o[kk]}});
+  if(refs.length)S.dayExtra[ymd]=refs;else if(S.dayExtra)delete S.dayExtra[ymd];
+  save(); src==='w'?renderWorkout():renderProgress();
+}
+// "+ Add exercise" dropdown: every PLAN exercise grouped by workout, minus ones
+// already on this date (plan or extra). src 'w' = Workout tab, 'c' = calendar.
+function addExSelectHTML(ymd,src){
+  const present=new Set(dayAllEx(ymd).map(([e])=>e.name));
+  let opts=`<option value="" selected>Choose an exercise…</option>`;
+  PLAN.forEach((d,di)=>{
+    if(!d.exercises.length)return;
+    const os=d.exercises.map((e,ei)=>present.has(e.name)?'':`<option value="${di}:${ei}">${e.name}</option>`).join('');
+    if(os)opts+=`<optgroup label="${d.name}">${os}</optgroup>`;
+  });
+  return`<div class="cd-planrow addex-row"><span class="cd-planlbl"><i class="ti ti-plus" aria-hidden="true"></i> Add exercise</span><select class="cd-plan" onchange="addExtraExercise('${ymd}',this.value,'${src}')" aria-label="Add an exercise to this day">${opts}</select></div>`;
+}
 function setExSwap(di,ei,v){
-  const base=planFor(weekDateFor(di)).exercises[ei]; if(!base)return;
+  const ymd=weekDateFor(di);
+  const base=ei>=EXB?extraExercises(ymd)[ei-EXB]:planFor(ymd).exercises[ei]; if(!base)return;
   S.exSwap=S.exSwap||{};
   if(v===''||v==null)delete S.exSwap[base.name]; else S.exSwap[base.name]=+v;
   save(); renderWorkout();
@@ -703,8 +751,8 @@ function toggleSet(di,ei,si){
   const k=K(di,ei,si,'done'); S.sets[k]=!S.sets[k]; save();
   const el=document.getElementById(`ck_${ei}_${si}`);
   if(el){el.className='scheck'+(S.sets[k]?' done':'');el.textContent=S.sets[k]?'✓':''}
-  const D=planFor(weekDateFor(di)); let total=0,done=0;
-  D.exercises.forEach((ex,i)=>{for(let s=0;s<ex.sets;s++){total++;if(S.sets[K(di,i,s,'done')])done++}});
+  let total=0,done=0;
+  dayAllEx(weekDateFor(di)).forEach(([ex,i])=>{for(let s=0;s<ex.sets;s++){total++;if(S.sets[K(di,i,s,'done')])done++}});
   document.getElementById('progFill').style.width=(total?Math.round(done/total*100):0)+'%';
   document.getElementById('progLabel').textContent=`${done} of ${total} sets complete`;
 }
@@ -843,6 +891,12 @@ function moveWorkout(oldYmd,newYmd){
     const ok=kAt(oldYmd,ei,s,f);
     if(S.sets[ok]!==undefined){S.sets[kAt(newYmd,ei,s,f)]=S.sets[ok];delete S.sets[ok]}
   })}});
+  // move any added-exercise refs + their set data (logged at index EXB+j)
+  extraRefs(oldYmd).forEach((_,j)=>{for(let s=0;s<EXMAXS;s++)EXF.forEach(f=>{
+    const ok=kAt(oldYmd,EXB+j,s,f);
+    if(S.sets[ok]!==undefined){S.sets[kAt(newYmd,EXB+j,s,f)]=S.sets[ok];delete S.sets[ok]}
+  })});
+  if(S.dayExtra&&S.dayExtra[oldYmd]){S.dayExtra[newYmd]=S.dayExtra[oldYmd];delete S.dayExtra[oldYmd]}
   if(S.dayDone[dkAt(oldYmd)]){S.dayDone[dkAt(newYmd)]=S.dayDone[dkAt(oldYmd)];delete S.dayDone[dkAt(oldYmd)]}
   S.dayPlan=S.dayPlan||{};
   if(planIdx!==ymdDow(newYmd))S.dayPlan[newYmd]=planIdx; else delete S.dayPlan[newYmd];
@@ -863,6 +917,7 @@ const ZZZ_SVG=`<svg class="zzz-svg" viewBox="0 0 140 96" xmlns="http://www.w3.or
 const CELL_MOON=`<svg class="cz" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 12.8A8.5 8.5 0 1 1 11.2 3a6.6 6.6 0 0 0 9.8 9.8z"/></svg>`;
 function exBlockHTML(ymd,ex,ei){
   const isBody=isBodyweight(ex);
+  const extraBtns=ei>=EXB?` <span class="cd-tag">added</span><button class="ex-del" onclick="removeExtraExercise('${ymd}',${ei-EXB},'c')" title="Remove added exercise" aria-label="Remove added exercise"><i class="ti ti-x"></i></button>`:'';
   const rows=Array.from({length:ex.sets},(_,s)=>{
     const dn=S.sets[kAt(ymd,ei,s,'done')]||false;
     return`<div class="setrow">
@@ -873,7 +928,7 @@ function exBlockHTML(ymd,ex,ei){
       <div class="scheck${dn?' done':''}" onclick="toggleSetAt('${ymd}',${ei},${s})" role="checkbox" aria-checked="${dn}" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleSetAt('${ymd}',${ei},${s})}">${dn?'✓':''}</div>
     </div>`;
   }).join('');
-  return`<div class="cd-exblock"><div class="cd-exname">${ex.name}<span class="cd-exmeta">${ex.sets}×${ex.reps} · ${ex.meta}</span></div>
+  return`<div class="cd-exblock"><div class="cd-exname">${ex.name}<span class="cd-exmeta">${ex.sets}×${ex.reps} · ${ex.meta}</span>${extraBtns}</div>
     <div class="sets-hd"><span></span><span>Reps</span><span>Weight</span><span>Ease</span><span></span></div>
     ${rows}</div>`;
 }
@@ -899,16 +954,20 @@ function dayDetailHTML(ymd){
     </div>`;
   h+=`<div class="cd-planrow"><span class="cd-planlbl">Workout plan</span>${planSelect}${overridden?`<button class="cd-resetplan" onclick="setDayPlan('${ymd}',${naturalIdx})" title="Reset to ${naturalName}"><i class="ti ti-rotate"></i></button>`:''}</div>`;
   if(future)h+=`<div class="cd-future"><i class="ti ti-info-circle"></i> This day is in the future.</div>`;
-  if(!D.exercises.length){
-    // Rest plan selected → zzz screen (the dropdown above switches to a workout)
+  const extras=extraExercises(ymd);
+  if(!D.exercises.length&&!extras.length){
+    // Rest plan selected → zzz screen (the dropdown above switches to a workout,
+    // or add a one-off exercise below without changing the plan)
     h+=`<div class="cd-rest">${ZZZ_SVG}
       <div class="cd-rest-msg">Catch some zzz's</div>
       <div class="cd-rest-sub">Recovery is where the gains settle in.</div>
       <div class="cd-altlabel">Feeling it? Pick a workout from the plan dropdown above.</div>
-    </div>`;
+    </div>`+addExSelectHTML(ymd,'c');
     return h;
   }
   h+=D.exercises.map((ex,ei)=>exBlockHTML(ymd,ex,ei)).join('');
+  h+=extras.map((ex,j)=>exBlockHTML(ymd,ex,EXB+j)).join('');
+  h+=addExSelectHTML(ymd,'c');
   h+=`<div class="slabel">Workout notes</div><textarea class="finput" rows="3" placeholder="How did it feel? PRs? Adjustments…" style="width:100%;resize:none" oninput="setDayNote('${ymd}',this.value)">${dayNoteOf(ymd)}</textarea>`;
   h+=`<button class="cd-done${done?' on':''}" onclick="markDoneAt('${ymd}')">${done?'✓ Workout complete':'Mark workout complete'}</button>`;
   return h;
