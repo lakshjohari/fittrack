@@ -119,6 +119,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .easewrap{display:flex;gap:3px;flex:1;min-width:0}
 .eseg{flex:1;min-width:0;height:26px;padding:0;border:0.5px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text3);font-size:10.5px;font-family:inherit;cursor:pointer;line-height:1;transition:background .1s,border-color .1s}
 .eseg:hover{border-color:var(--border2)}
+/* phone-only ease chip (col in the set row); hidden on desktop where segments are always visible */
+.ease-chip{display:none;align-items:center;justify-content:center;height:100%;min-height:30px;padding:0 6px;border:0.5px solid var(--border2);border-radius:14px;background:none;color:var(--text2);font-size:11px;font-family:inherit;cursor:pointer;line-height:1;white-space:nowrap}
 .sn{font-size:12.5px;color:var(--text3);text-align:center}
 .sinput{border:0.5px solid var(--border);border-radius:var(--r-md);padding:7px 5px;font-size:13px;text-align:center;background:var(--bg2);color:var(--text);width:100%;font-family:inherit}
 .sinput:focus{outline:none;border-color:var(--green)}
@@ -290,9 +292,18 @@ button,select,input{touch-action:manipulation}
   .card{padding:.9rem 1rem}
   /* day pills: comfier touch targets */
   .dpill{padding:9px 15px;font-size:14px}
-  /* ease segments: taller tap targets, tighter label */
+  /* B — ease on demand: chip column in the set row, segments hidden until tapped */
+  .setrow,.sets-hd{grid-template-columns:26px 1fr 1fr 44px 30px}
+  .ease-chip{display:flex}
+  .easerow{display:none;padding-left:0}
+  .easerow.open{display:flex}
   .eseg{height:31px}
-  .easerow{padding-left:0}
+  /* A — lean headers: GIF + tip only when the card is expanded */
+  .excard .ex-anims{display:none}
+  .excard:has(.exbody.open) .ex-anims{display:flex}
+  .excard .ex-tip{display:none}
+  .excard:has(.exbody.open) .ex-tip{display:block;white-space:normal}
+  .ex-info{padding:12px 14px}
   /* month calendar: denser phone cells — number + type only */
   .ccell{min-height:64px;padding:5px 5px 6px}
   .cnum{min-width:24px;height:24px;font-size:14px;border-radius:12px}
@@ -716,6 +727,7 @@ function renderWorkout(){
         <div class="sn">${s+1}</div>
         <input class="sinput" type="number" inputmode="numeric" min="0" step="1" placeholder="—" value="${S.sets[K(i,ei,s,'reps')]??''}" onchange="setV(${i},${ei},${s},'reps',this.value)" aria-label="reps" title="reps">
         ${weightCell(isBody,S.sets[K(i,ei,s,'weight')],`setV(${i},${ei},${s},'weight',this.value)`)}
+        ${easeChipHTML(S.sets[K(i,ei,s,'ease')])}
         <div class="scheck${dn?' done':''}" id="ck_${ei}_${s}" onclick="toggleSet(${i},${ei},${s})" role="checkbox" aria-checked="${dn}" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' ')toggleSet(${i},${ei},${s})">${dn?'✓':''}</div>
       </div>${easeSegsHTML(S.sets[K(i,ei,s,'ease')],`easePick(this,${i},${ei},${s})`)}`;
     }).join('');
@@ -857,16 +869,39 @@ function easePaint(wrap,v){
     b.style.background=on?band[3]:'';b.style.borderColor=on?band[3]:'';b.style.color=on?'#fff':'';
     b.setAttribute('aria-pressed',String(v>=0&&bv===v));});
 }
-// Tap to set; tap the selected value again to clear. Paints in place (no rerender).
+// Phone-only chip in the set row: shows the current ease, toggles the segments.
+function easeChipHTML(cur){
+  cur=(cur===''||cur==null)?-1:+cur;
+  const b=cur>=0?easeBand(cur):null;
+  const st=b?` style="border-color:${b[3]};color:${b[3]};font-weight:600"`:'';
+  return`<button type="button" class="ease-chip"${st} onclick="easeChipToggle(this)" title="Ease (tap for scale)" aria-label="Ease — tap to open the 0–10 scale">E ${cur>=0?cur:'–'}</button>`;
+}
+function easeChipToggle(btn){
+  const row=btn.closest('.setrow'), er=row&&row.nextElementSibling;
+  if(er&&er.classList.contains('easerow'))er.classList.toggle('open');
+}
+// Tap to set; tap the selected value again to clear. Paints segments + chip in
+// place (no rerender); on phones the segment row auto-collapses after a pick.
+function easeSync(wrap,v){
+  easePaint(wrap,v);
+  const er=wrap.parentElement, sr=er.previousElementSibling;
+  const chip=sr&&sr.querySelector&&sr.querySelector('.ease-chip');
+  if(chip){
+    const b=v>=0?easeBand(v):null;
+    chip.textContent='E '+(v>=0?v:'–');
+    chip.style.borderColor=b?b[3]:'';chip.style.color=b?b[3]:'';chip.style.fontWeight=v>=0?'600':'';
+  }
+  if(window.matchMedia('(max-width:640px)').matches)er.classList.remove('open');
+}
 function easePick(btn,di,ei,si){
   const k=K(di,ei,si,'ease'), v=+btn.dataset.v;
-  if(String(S.sets[k])===String(v)){delete S.sets[k];save();easePaint(btn.parentElement,-1)}
-  else{S.sets[k]=v;save();easePaint(btn.parentElement,v)}
+  if(String(S.sets[k])===String(v)){delete S.sets[k];save();easeSync(btn.parentElement,-1)}
+  else{S.sets[k]=v;save();easeSync(btn.parentElement,v)}
 }
 function easePickAt(btn,ymd,ei,si){
   const k=kAt(ymd,ei,si,'ease'), v=+btn.dataset.v;
-  if(String(S.sets[k])===String(v)){delete S.sets[k];save();easePaint(btn.parentElement,-1)}
-  else{S.sets[k]=v;save();easePaint(btn.parentElement,v)}
+  if(String(S.sets[k])===String(v)){delete S.sets[k];save();easeSync(btn.parentElement,-1)}
+  else{S.sets[k]=v;save();easeSync(btn.parentElement,v)}
 }
 // Build <option>s; keep any previously-saved off-grid value so existing logs survive.
 function selOpts(vals,cur){
@@ -1073,6 +1108,7 @@ function exBlockHTML(ymd,ex,ei){
       <div class="sn">${s+1}</div>
       <input class="sinput" type="number" inputmode="numeric" min="0" step="1" placeholder="—" value="${S.sets[kAt(ymd,ei,s,'reps')]??''}" onchange="setVAt('${ymd}',${ei},${s},'reps',this.value)" aria-label="reps">
       ${weightCell(isBody,S.sets[kAt(ymd,ei,s,'weight')],`setVAt('${ymd}',${ei},${s},'weight',this.value)`)}
+      ${easeChipHTML(S.sets[kAt(ymd,ei,s,'ease')])}
       <div class="scheck${dn?' done':''}" onclick="toggleSetAt('${ymd}',${ei},${s})" role="checkbox" aria-checked="${dn}" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleSetAt('${ymd}',${ei},${s})}">${dn?'✓':''}</div>
     </div>${easeSegsHTML(S.sets[kAt(ymd,ei,s,'ease')],`easePickAt(this,'${ymd}',${ei},${s})`)}`;
   }).join('');
