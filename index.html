@@ -542,8 +542,8 @@ const PLAN=[
     {name:'Diamond push-ups',meta:'Bodyweight',sets:3,reps:'8–12',anim:'diamond',rest:'60s',tip:'Burnout — hands together, elbows track back'},
   ]},
   {day:'Tue',name:'Pull',focus:'Back · Biceps · Rear Delts · Grip',type:'strength',exercises:[
-    {name:'Chin-up',meta:'Pull-up bar',sets:3,reps:'5–10',anim:'chinup',rest:'90s',tip:'No bar? Use the swap — rows still grow your back',alts:[
-      {name:'Backpack bent-over row (heavy)',meta:'Loaded backpack',sets:3,reps:'10–12',anim:'row',rest:'90s',tip:'No bar substitute — load heavy, pull to your waist',steps:['Load a backpack as heavy as you can row with good form.','Hinge forward ~45° with a flat back; hold the bag by the top strap.','Pull the strap to your waist, squeeze your back hard, lower slowly.']}]},
+    {name:'Renegade row',meta:'Dumbbells',sets:3,reps:'8 each side',anim:'renegade',rest:'90s',tip:'Plank position, zero hip rotation',alts:[
+      {name:'Plank shoulder taps',meta:'Bodyweight',sets:3,reps:'10 each side',anim:'plank',rest:'60s',tip:'No equipment — tap opposite shoulder, keep hips dead still'}]},
     {name:'Bent-over row',meta:'Dumbbells',sets:4,reps:'8–12',anim:'row',rest:'90s',tip:'Hinge 45°, pull elbows to hip',alts:[
       {name:'Backpack bent-over row',meta:'Loaded backpack',sets:4,reps:'10–12',anim:'row',rest:'90s',tip:'Same movement — load a backpack instead of dumbbells',steps:['Load a backpack or duffel until it feels challenging.','Hinge forward ~45° with a flat back; let the bag hang from your hands by the top strap.','Pull the strap to your waist, squeeze your back, then lower under control.']}]},
     {name:'Kettlebell row',meta:'Kettlebell',sets:3,reps:'10 each side',anim:'kbrow',rest:'75s',tip:'One bell — all reps one side, then switch'},
@@ -690,7 +690,7 @@ function renderWorkout(){
       const dn=S.sets[K(i,ei,s,'done')]||false;
       return`<div class="setrow">
         <div class="sn">${s+1}</div>
-        <select class="sinput" onchange="setV(${i},${ei},${s},'reps',this.value)" aria-label="reps" title="reps">${selOpts(REPS_OPTS,S.sets[K(i,ei,s,'reps')])}</select>
+        <input class="sinput" type="number" inputmode="numeric" min="0" step="1" placeholder="—" value="${S.sets[K(i,ei,s,'reps')]??''}" onchange="setV(${i},${ei},${s},'reps',this.value)" aria-label="reps" title="reps">
         ${weightCell(isBody,S.sets[K(i,ei,s,'weight')],`setV(${i},${ei},${s},'weight',this.value)`)}
         <select class="sinput" onchange="setV(${i},${ei},${s},'ease',this.value)" aria-label="ease 0-10" title="How easy was it? 0 = brutal, 10 = effortless">${selOpts(EASE_OPTS,S.sets[K(i,ei,s,'ease')])}</select>
         <div class="scheck${dn?' done':''}" id="ck_${ei}_${s}" onclick="toggleSet(${i},${ei},${s})" role="checkbox" aria-checked="${dn}" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' ')toggleSet(${i},${ei},${s})">${dn?'✓':''}</div>
@@ -812,8 +812,7 @@ function importData(input){
 function applyLayout(){document.querySelector('.shell').classList.toggle('wide',!!S.wideLayout)}
 function toggleLayout(){S.wideLayout=!S.wideLayout;save();applyLayout()}
 function setV(di,ei,si,f,v){S.sets[K(di,ei,si,f)]=v;save()}
-// Dropdown option lists for the set rows.
-const REPS_OPTS=Array.from({length:30},(_,i)=>i+1); // 1–30
+// Dropdown option lists for the set rows (reps is a free numeric input).
 // BW, 0, then every 1 kg from 2–20 (common dumbbell range), then 2.5-kg steps to 60.
 const WEIGHT_OPTS=(()=>{const a=['BW',0];for(let w=2;w<=20;w++)a.push(w);for(let w=22.5;w<=60;w+=2.5)a.push(w);return a})();
 const EASE_OPTS=Array.from({length:11},(_,i)=>i); // 0 (brutal) – 10 (effortless)
@@ -1020,7 +1019,7 @@ function exBlockHTML(ymd,ex,ei){
     const dn=S.sets[kAt(ymd,ei,s,'done')]||false;
     return`<div class="setrow">
       <div class="sn">${s+1}</div>
-      <select class="sinput" onchange="setVAt('${ymd}',${ei},${s},'reps',this.value)" aria-label="reps">${selOpts(REPS_OPTS,S.sets[kAt(ymd,ei,s,'reps')])}</select>
+      <input class="sinput" type="number" inputmode="numeric" min="0" step="1" placeholder="—" value="${S.sets[kAt(ymd,ei,s,'reps')]??''}" onchange="setVAt('${ymd}',${ei},${s},'reps',this.value)" aria-label="reps">
       ${weightCell(isBody,S.sets[kAt(ymd,ei,s,'weight')],`setVAt('${ymd}',${ei},${s},'weight',this.value)`)}
       <select class="sinput" onchange="setVAt('${ymd}',${ei},${s},'ease',this.value)" aria-label="ease">${selOpts(EASE_OPTS,S.sets[kAt(ymd,ei,s,'ease')])}</select>
       <div class="scheck${dn?' done':''}" onclick="toggleSetAt('${ymd}',${ei},${s})" role="checkbox" aria-checked="${dn}" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleSetAt('${ymd}',${ei},${s})}">${dn?'✓':''}</div>
