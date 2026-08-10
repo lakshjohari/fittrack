@@ -110,9 +110,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .exbody.open{display:block}
 .yt-btn{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;color:var(--text2);background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--r-md);padding:6px 12px;cursor:pointer;text-decoration:none;margin-bottom:10px;font-family:inherit}
 .yt-btn:hover{border-color:var(--green);color:var(--green)}
-.sets-hd{display:grid;grid-template-columns:26px 1fr 1fr 1fr 30px;gap:5px;margin-bottom:5px;padding:0 2px}
+.sets-hd{display:grid;grid-template-columns:26px 1fr 1fr 30px;gap:5px;margin-bottom:5px;padding:0 2px}
 .sets-hd span{font-size:11px;color:var(--text2);text-align:center}
-.setrow{display:grid;grid-template-columns:26px 1fr 1fr 1fr 30px;gap:5px;align-items:center;margin-bottom:5px}
+.setrow{display:grid;grid-template-columns:26px 1fr 1fr 30px;gap:5px;align-items:center;margin-bottom:4px}
+/* ease tap-segments: slim row under each set */
+.easerow{display:flex;align-items:center;gap:8px;margin:0 0 9px;padding-left:31px}
+.ease-lbl{font-size:10.5px;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;flex-shrink:0}
+.easewrap{display:flex;gap:3px;flex:1;min-width:0}
+.eseg{flex:1;min-width:0;height:26px;padding:0;border:0.5px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text3);font-size:10.5px;font-family:inherit;cursor:pointer;line-height:1;transition:background .1s,border-color .1s}
+.eseg:hover{border-color:var(--border2)}
 .sn{font-size:12.5px;color:var(--text3);text-align:center}
 .sinput{border:0.5px solid var(--border);border-radius:var(--r-md);padding:7px 5px;font-size:13px;text-align:center;background:var(--bg2);color:var(--text);width:100%;font-family:inherit}
 .sinput:focus{outline:none;border-color:var(--green)}
@@ -284,6 +290,9 @@ button,select,input{touch-action:manipulation}
   .card{padding:.9rem 1rem}
   /* day pills: comfier touch targets */
   .dpill{padding:9px 15px;font-size:14px}
+  /* ease segments: taller tap targets, tighter label */
+  .eseg{height:31px}
+  .easerow{padding-left:0}
   /* month calendar: denser phone cells — number + type only */
   .ccell{min-height:64px;padding:5px 5px 6px}
   .cnum{min-width:24px;height:24px;font-size:14px;border-radius:12px}
@@ -707,9 +716,8 @@ function renderWorkout(){
         <div class="sn">${s+1}</div>
         <input class="sinput" type="number" inputmode="numeric" min="0" step="1" placeholder="—" value="${S.sets[K(i,ei,s,'reps')]??''}" onchange="setV(${i},${ei},${s},'reps',this.value)" aria-label="reps" title="reps">
         ${weightCell(isBody,S.sets[K(i,ei,s,'weight')],`setV(${i},${ei},${s},'weight',this.value)`)}
-        <select class="sinput" onchange="setV(${i},${ei},${s},'ease',this.value)" aria-label="ease 0-10" title="How easy was it? 0 = brutal, 10 = effortless">${selOpts(EASE_OPTS,S.sets[K(i,ei,s,'ease')])}</select>
         <div class="scheck${dn?' done':''}" id="ck_${ei}_${s}" onclick="toggleSet(${i},${ei},${s})" role="checkbox" aria-checked="${dn}" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' ')toggleSet(${i},${ei},${s})">${dn?'✓':''}</div>
-      </div>`;
+      </div>${easeSegsHTML(S.sets[K(i,ei,s,'ease')],`easePick(this,${i},${ei},${s})`)}`;
     }).join('');
     const ytQ=encodeURIComponent(ex.name+' exercise form tutorial');
     return`<div class="excard" id="excard_${ei}">
@@ -729,7 +737,7 @@ function renderWorkout(){
           <i class="ti ti-brand-youtube" style="color:#ff0000;font-size:14px" aria-hidden="true"></i> Watch demo on YouTube
         </a>
         ${exStepsHTML(ex)}
-        <div class="sets-hd"><span></span><span>Reps</span><span>Weight (kg)</span><span>Ease 0–10</span><span></span></div>
+        <div class="sets-hd"><span></span><span>Reps</span><span>Weight (kg)</span><span></span></div>
         ${sRows}
         <div class="rest-hint"><i class="ti ti-clock" style="font-size:12px" aria-hidden="true"></i> Rest ${ex.rest} between sets</div>
       </div>
@@ -830,7 +838,36 @@ function setV(di,ei,si,f,v){S.sets[K(di,ei,si,f)]=v;save()}
 // Dropdown option lists for the set rows (reps is a free numeric input).
 // BW, 0, then every 1 kg from 2–20 (common dumbbell range), then 2.5-kg steps to 60.
 const WEIGHT_OPTS=(()=>{const a=['BW',0];for(let w=2;w<=20;w++)a.push(w);for(let w=22.5;w<=60;w+=2.5)a.push(w);return a})();
-const EASE_OPTS=Array.from({length:11},(_,i)=>i); // 0 (brutal) – 10 (effortless)
+// Ease 0–10 as tap segments (replaced the dropdown): fill colors by meaning band.
+const EASE_BANDS=[[0,2,'brutal','#E24B4A'],[3,4,'hard','#F59E0B'],[5,6,'solid','#8A8A85'],[7,8,'comfortable','#0F6E56'],[9,10,'effortless','#1D9E75']];
+function easeBand(v){for(const b of EASE_BANDS)if(v>=b[0]&&v<=b[1])return b;return EASE_BANDS[2]}
+function easeSegsHTML(cur,pickCall){
+  cur=(cur===''||cur==null)?-1:+cur;
+  const band=cur>=0?easeBand(cur):null;
+  let h=`<div class="easerow"><span class="ease-lbl">Ease</span><div class="easewrap">`;
+  for(let v=0;v<=10;v++){
+    const on=cur>=0&&v<=cur;
+    h+=`<button type="button" class="eseg" data-v="${v}"${on?` style="background:${band[3]};border-color:${band[3]};color:#fff"`:''} title="${v} — ${easeBand(v)[2]}" aria-label="Ease ${v} (${easeBand(v)[2]})" aria-pressed="${cur===v}" onclick="${pickCall}">${v}</button>`;
+  }
+  return h+`</div></div>`;
+}
+function easePaint(wrap,v){
+  const band=v>=0?easeBand(v):null;
+  [...wrap.children].forEach(b=>{const bv=+b.dataset.v,on=v>=0&&bv<=v;
+    b.style.background=on?band[3]:'';b.style.borderColor=on?band[3]:'';b.style.color=on?'#fff':'';
+    b.setAttribute('aria-pressed',String(v>=0&&bv===v));});
+}
+// Tap to set; tap the selected value again to clear. Paints in place (no rerender).
+function easePick(btn,di,ei,si){
+  const k=K(di,ei,si,'ease'), v=+btn.dataset.v;
+  if(String(S.sets[k])===String(v)){delete S.sets[k];save();easePaint(btn.parentElement,-1)}
+  else{S.sets[k]=v;save();easePaint(btn.parentElement,v)}
+}
+function easePickAt(btn,ymd,ei,si){
+  const k=kAt(ymd,ei,si,'ease'), v=+btn.dataset.v;
+  if(String(S.sets[k])===String(v)){delete S.sets[k];save();easePaint(btn.parentElement,-1)}
+  else{S.sets[k]=v;save();easePaint(btn.parentElement,v)}
+}
 // Build <option>s; keep any previously-saved off-grid value so existing logs survive.
 function selOpts(vals,cur){
   cur=cur==null?'':String(cur);
@@ -1036,12 +1073,11 @@ function exBlockHTML(ymd,ex,ei){
       <div class="sn">${s+1}</div>
       <input class="sinput" type="number" inputmode="numeric" min="0" step="1" placeholder="—" value="${S.sets[kAt(ymd,ei,s,'reps')]??''}" onchange="setVAt('${ymd}',${ei},${s},'reps',this.value)" aria-label="reps">
       ${weightCell(isBody,S.sets[kAt(ymd,ei,s,'weight')],`setVAt('${ymd}',${ei},${s},'weight',this.value)`)}
-      <select class="sinput" onchange="setVAt('${ymd}',${ei},${s},'ease',this.value)" aria-label="ease">${selOpts(EASE_OPTS,S.sets[kAt(ymd,ei,s,'ease')])}</select>
       <div class="scheck${dn?' done':''}" onclick="toggleSetAt('${ymd}',${ei},${s})" role="checkbox" aria-checked="${dn}" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleSetAt('${ymd}',${ei},${s})}">${dn?'✓':''}</div>
-    </div>`;
+    </div>${easeSegsHTML(S.sets[kAt(ymd,ei,s,'ease')],`easePickAt(this,'${ymd}',${ei},${s})`)}`;
   }).join('');
   return`<div class="cd-exblock"><div class="cd-exname">${ex.name}<span class="cd-exmeta">${ex.sets}×${ex.reps} · ${ex.meta}</span>${extraBtns}</div>
-    <div class="sets-hd"><span></span><span>Reps</span><span>Weight</span><span>Ease</span><span></span></div>
+    <div class="sets-hd"><span></span><span>Reps</span><span>Weight</span><span></span></div>
     ${rows}</div>`;
 }
 function dayDetailHTML(ymd){
