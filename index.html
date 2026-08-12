@@ -286,9 +286,11 @@ button,select,input{touch-action:manipulation}
 /* ===== Phone layout (≤640px): bottom tab bar, tighter cards ===== */
 @media(max-width:640px){
   .layout-toggle{display:none} /* wide mode is meaningless on a phone */
-  /* neutralize a saved wide-layout pref: single column always */
+  /* neutralize a saved wide-layout pref: single column always.
+     NOTE: every wide-mode grid container needs an entry here — a new one
+     (e.g. .blockwrap) will otherwise stay 2-col on phones. */
   .shell.wide{max-width:720px}
-  .shell.wide #workoutPane,.shell.wide #measCards,.shell.wide #pane-weight.active,.shell.wide #pane-progress.active{display:block}
+  .shell.wide #workoutPane,.shell.wide #measCards,.shell.wide #pane-weight.active,.shell.wide #pane-progress.active,.shell.wide #workoutPane>.blockwrap{display:block}
   .nav{position:fixed;bottom:0;left:0;right:0;z-index:120;border-bottom:none;border-top:0.5px solid var(--border);background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:saturate(1.5) blur(16px);-webkit-backdrop-filter:saturate(1.5) blur(16px);padding-bottom:env(safe-area-inset-bottom)}
   .nav-btn{flex-direction:column;gap:3px;padding:8px 0 6px;font-size:11px;font-weight:500;border-bottom:none;border-radius:12px;margin:4px 3px}
   .nav-btn i{font-size:22px;line-height:1}
