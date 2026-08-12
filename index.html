@@ -312,10 +312,14 @@ button,select,input{touch-action:manipulation}
   .eseg{height:31px}
   /* A — lean headers: GIF + tip only when the card is expanded */
   .excard .ex-anims{display:none}
-  .excard:has(.exbody.open) .ex-anims{display:flex}
   .excard .ex-tip{display:none}
   .excard:has(.exbody.open) .ex-tip{display:block;white-space:normal}
   .ex-info{padding:12px 14px}
+  /* expanded: GIF drops to its own full-width row so the title keeps full
+     width (side-by-side squeezed the text column, badly inside block rails) */
+  .excard:has(.exbody.open) .exhead{flex-wrap:wrap}
+  .excard:has(.exbody.open) .ex-anims{display:flex;order:3;flex:0 0 100%;width:auto;min-width:0;border-right:none;border-top:0.5px solid var(--border)}
+  .excard:has(.exbody.open) .exfig{width:150px;height:150px}
   /* month calendar: denser phone cells — number + type only */
   .ccell{min-height:64px;padding:5px 5px 6px}
   .cnum{min-width:24px;height:24px;font-size:14px;border-radius:12px}
