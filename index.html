@@ -72,6 +72,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .prog-fill{height:100%;background:var(--green);border-radius:3px;transition:width .3s}
 .prog-label{font-size:13.5px;color:var(--text2);margin-bottom:.9rem}
 
+/* Training blocks (straight sets / superset / circuit) */
+.block-hd{display:flex;align-items:center;gap:8px;margin:14px 2px 8px}
+.block-num{width:20px;height:20px;border-radius:50%;background:var(--bk,var(--text3));color:#fff;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.block-num i{font-size:12px}
+.block-lbl{font-size:12.5px;font-weight:600}
+.block-note{margin-left:auto;font-size:11px;color:var(--text3);text-align:right}
+.blockwrap{border-left:3px solid var(--bk,var(--border2));padding-left:8px;margin-bottom:4px}
+.ex-tag{font-size:10px;font-weight:600;border-radius:8px;padding:2px 6px;background:var(--accent-l);color:var(--accent);vertical-align:2px}
+.shell.wide #workoutPane>.block-hd{grid-column:1/-1}
+.shell.wide #workoutPane>.blockwrap{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,1fr);gap:.7rem}
+.shell.wide .blockwrap>.excard{margin-bottom:0}
+
 /* Exercise card */
 .excard{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--r-lg);margin-bottom:.65rem;overflow:hidden;box-shadow:var(--shadow);transition:box-shadow .18s,border-color .18s,transform .18s}
 .excard:hover{box-shadow:var(--shadow-md);border-color:var(--border2)}
@@ -560,8 +572,17 @@ const PLAN_LEGACY=[
 
 // Current plan (from 2026-08-10): dumbbells + kettlebell + flat bench +
 // skipping rope + hand gripper. Compounds first, 4 sets on the big lifts.
+// Training blocks (v2 plan only): group a day's exercises into straight-set /
+// superset / circuit sections. `count` = how many consecutive exercises belong
+// to the block — counts MUST sum to exercises.length. Pure metadata: exercise
+// order and set keys are untouched. Days without `blocks` render as before.
+const BLOCK_COLORS={straight:'#1D9E75',superset:'#3B82F6',circuit:'#D6457E'};
 const PLAN=[
-  {day:'Mon',name:'Push',focus:'Chest · Shoulders · Triceps',type:'strength',exercises:[
+  {day:'Mon',name:'Push',focus:'Chest · Shoulders · Triceps',type:'strength',
+   blocks:[{label:'Heavy — straight sets',note:'finish all sets · rest 90s',count:2,kind:'straight'},
+           {label:'Superset pair',note:'alternate A1/A2 · rest 45s',count:2,kind:'superset'},
+           {label:'Circuit finisher',note:'1 set each, repeat ×3 · rest 60s/round',count:3,kind:'circuit'}],
+   exercises:[
     {name:'Dumbbell bench press',meta:'Dumbbells + bench',sets:4,reps:'8–12',anim:'floorpress',rest:'90s',tip:'Elbows ~45°, full stretch at the bottom',alts:[
       {name:'Push-up',meta:'Bodyweight',sets:4,reps:'12–15',anim:'pushup',rest:'90s',tip:'No equipment — chest to floor, core tight'}]},
     {name:'Seated shoulder press',meta:'Dumbbells + bench',sets:3,reps:'8–12',anim:'press',rest:'90s',tip:'Back tall, press to lockout, lower to ears',alts:[
@@ -576,7 +597,11 @@ const PLAN=[
       {name:'Diamond push-up',meta:'Bodyweight',sets:3,reps:'8–12',anim:'diamond',rest:'60s',tip:'No equipment — hands together, elbows track back'}]},
     {name:'Diamond push-ups',meta:'Bodyweight',sets:3,reps:'8–12',anim:'diamond',rest:'60s',tip:'Burnout — hands together, elbows track back'},
   ]},
-  {day:'Tue',name:'Pull',focus:'Back · Biceps · Rear Delts · Grip',type:'strength',exercises:[
+  {day:'Tue',name:'Pull',focus:'Back · Biceps · Rear Delts · Grip',type:'strength',
+   blocks:[{label:'Heavy — straight sets',note:'finish all sets · rest 90s',count:3,kind:'straight'},
+           {label:'Superset pair',note:'alternate A1/A2 · rest 45s',count:2,kind:'superset'},
+           {label:'Circuit finisher',note:'1 set each, repeat ×3 · rest 60s/round',count:3,kind:'circuit'}],
+   exercises:[
     {name:'Renegade row',meta:'Dumbbells',sets:3,reps:'8 each side',anim:'renegade',rest:'90s',tip:'Plank position, zero hip rotation',alts:[
       {name:'Plank shoulder taps',meta:'Bodyweight',sets:3,reps:'10 each side',anim:'plank',rest:'60s',tip:'No equipment — tap opposite shoulder, keep hips dead still'}]},
     {name:'Bent-over row',meta:'Dumbbells',sets:4,reps:'8–12',anim:'row',rest:'90s',tip:'Hinge 45°, pull elbows to hip',alts:[
@@ -592,7 +617,10 @@ const PLAN=[
       {name:'Backpack hammer curl',meta:'Loaded backpack',sets:3,reps:'12–15',anim:'hammer',rest:'60s',tip:'Same movement — load a backpack instead of dumbbells',steps:['Load a backpack until it feels challenging.','Hold it by the side straps with palms facing each other (neutral grip).','Keep elbows tucked and curl to your shoulders, then lower slowly.']}]},
     {name:'Hand gripper squeeze',meta:'Hand gripper',sets:3,reps:'15–20 each hand',anim:'gripper',rest:'45s',tip:'Full close, 1s squeeze, slow open',steps:['Hold the gripper in one hand with the handles across your palm and fingers.','Squeeze the handles fully closed — aim to touch them together.','Hold the squeeze for a second, then open slowly under control.','Finish all reps, then switch hands. Too easy? Slow the negative or add reps.']},
   ]},
-  {day:'Wed',name:'Legs',focus:'Quads · Hamstrings · Glutes · Calves',type:'strength',exercises:[
+  {day:'Wed',name:'Legs',focus:'Quads · Hamstrings · Glutes · Calves',type:'strength',
+   blocks:[{label:'Heavy — straight sets',note:'finish all sets · rest 90s',count:4,kind:'straight'},
+           {label:'Circuit finisher',note:'1 set each, repeat ×3 · rest 60s/round',count:3,kind:'circuit'}],
+   exercises:[
     {name:'Kettlebell goblet squat',meta:'Kettlebell',sets:4,reps:'10–15',anim:'kbgoblet',rest:'90s',tip:'Bell at chest, sit back deep',alts:[
       {name:'Reverse lunge',meta:'Bodyweight',sets:4,reps:'12 each leg',anim:'lunge',rest:'90s',tip:'No equipment — step back, front knee to 90°'},
       {name:'Jump squat',meta:'Bodyweight',sets:4,reps:'15',anim:'jumpsquat',rest:'90s',tip:'No equipment — explode up, land soft'}]},
@@ -609,7 +637,10 @@ const PLAN=[
     {name:'Calf raises',meta:'Bodyweight / DB',sets:4,reps:'20–25',anim:'calf',rest:'45s',tip:'Full range, pause top & bottom'},
   ]},
   {day:'Thu',name:'Rest',focus:'Active recovery',type:'rest',exercises:[]},
-  {day:'Fri',name:'Upper',focus:'Full upper body · Grip',type:'strength',exercises:[
+  {day:'Fri',name:'Upper',focus:'Full upper body · Grip',type:'strength',
+   blocks:[{label:'Heavy — straight sets',note:'finish all sets · rest 90s',count:3,kind:'straight'},
+           {label:'Circuit finisher',note:'1 set each, repeat ×3 · rest 60s/round',count:4,kind:'circuit'}],
+   exercises:[
     {name:'Arnold press',meta:'Dumbbells + bench',sets:3,reps:'8–12',anim:'arnold',rest:'90s',tip:'Seated on the bench — rotate palms on the way up',alts:[
       {name:'Pike push-up',meta:'Bodyweight',sets:3,reps:'10–12',anim:'pike',rest:'90s',tip:'No equipment — shoulder-focused pressing'}]},
     {name:'Kettlebell press',meta:'Kettlebell',sets:3,reps:'8–10 each side',anim:'kbpress',rest:'75s',tip:'One bell — rack it, brace, press strict'},
@@ -622,7 +653,10 @@ const PLAN=[
       {name:'Diamond push-up',meta:'Bodyweight',sets:3,reps:'8–12',anim:'diamond',rest:'60s',tip:'No equipment — hands together, elbows track back'}]},
     {name:'Hand gripper squeeze',meta:'Hand gripper',sets:3,reps:'15–20 each hand',anim:'gripper',rest:'45s',tip:'Full close, 1s squeeze, slow open',steps:['Hold the gripper in one hand with the handles across your palm and fingers.','Squeeze the handles fully closed — aim to touch them together.','Hold the squeeze for a second, then open slowly under control.','Finish all reps, then switch hands. Too easy? Slow the negative or add reps.']},
   ]},
-  {day:'Sat',name:'Core & Cardio',focus:'Abs · Conditioning · Rope',type:'cardio',exercises:[
+  {day:'Sat',name:'Core & Cardio',focus:'Abs · Conditioning · Rope',type:'cardio',
+   blocks:[{label:'Rope rounds',note:'5 × 60s · rest 45s',count:1,kind:'straight'},
+           {label:'Full circuit',note:'1 set each, repeat ×3 · rest 60s/round',count:6,kind:'circuit'}],
+   exercises:[
     {name:'Jump rope',meta:'Skipping rope',sets:5,reps:'60s rounds',anim:'jumprope',rest:'45s',tip:'Wrists spin the rope, stay on the balls of your feet',alts:[
       {name:'Mountain climbers',meta:'Bodyweight',sets:5,reps:'30s rounds',anim:'mountain',rest:'45s',tip:'No rope — drive knees fast, hips low'}]},
     {name:'Kettlebell swing',meta:'Kettlebell',sets:3,reps:'15–20',anim:'kbswing',rest:'60s',tip:'Conditioning pace — crisp hip snap every rep',alts:[
@@ -686,6 +720,10 @@ function setWorkoutPlan(i,idx){
   save();renderWorkout();
 }
 
+function blockHeaderHTML(b,n){
+  const c=BLOCK_COLORS[b.kind]||'var(--text3)';
+  return`<div class="block-hd" style="--bk:${c}"><span class="block-num">${n}</span><span class="block-lbl">${b.label}</span>${b.note?`<span class="block-note">${b.note}</span>`:''}</div>`;
+}
 function renderWorkout(){
   const i=S.currentDay, ymd=weekDateFor(i), D=planFor(ymd), overridden=planIdxFor(ymd)!==i;
   document.getElementById('dayPills').innerHTML=PLAN.map((d,j)=>{
@@ -716,7 +754,7 @@ function renderWorkout(){
   b.textContent=S.dayDone[DK(i)]?'✓ Workout complete!':'Mark workout complete';
   b.disabled=!!S.dayDone[DK(i)];
 
-  const exCardHTML=([baseEx,ei])=>{
+  const exCardHTML=([baseEx,ei],tag)=>{
     const ex=exEff(baseEx);
     const curSub=baseEx.alts?((S.exSwap&&S.exSwap[baseEx.name]!=null)?S.exSwap[baseEx.name]:''):'';
     const open=S['open_'+i+'_'+ei];
@@ -736,7 +774,7 @@ function renderWorkout(){
       <div class="exhead" onclick="toggleEx(${i},${ei})" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' ')toggleEx(${i},${ei})">
         <div class="ex-anims">${getAnimHTML(ex.anim)}</div>
         <div class="ex-info">
-          <div class="ex-name">${ex.name}${ei>=EXB?' <span class="cd-tag">added</span>':''}</div>
+          <div class="ex-name">${tag?`<span class="ex-tag">${tag}</span> `:''}${ex.name}${ei>=EXB?' <span class="cd-tag">added</span>':''}</div>
           <div class="ex-meta">${ex.meta} · ${ex.sets}×${ex.reps}</div>
           <div class="ex-tip">${ex.tip}</div>
         </div>
@@ -755,7 +793,23 @@ function renderWorkout(){
       </div>
     </div>`;
   };
-  pane.innerHTML=planBar+allEx.map(exCardHTML).join('')+addExSelectHTML(ymd,'w')+`<div class="slabel">Workout notes</div>
+  // walk the day's blocks (fallback: one unlabeled block = pre-blocks rendering)
+  const blocks=(D.blocks&&D.blocks.length)?D.blocks:(D.exercises.length?[{label:'',note:'',count:D.exercises.length,kind:''}]:[]);
+  let bodyHtml='',bIdx=0,bn=0;
+  for(const b of blocks){
+    bn++;
+    const items=[];for(let j=0;j<b.count&&bIdx<D.exercises.length;j++,bIdx++)items.push(bIdx);
+    if(!items.length)continue;
+    if(b.label)bodyHtml+=blockHeaderHTML(b,bn);
+    const inner=items.map((ei,j)=>exCardHTML([D.exercises[ei],ei],b.kind==='superset'?('A'+(j+1)):null)).join('');
+    bodyHtml+=(b.kind==='superset'||b.kind==='circuit')?`<div class="blockwrap" style="--bk:${BLOCK_COLORS[b.kind]}">${inner}</div>`:inner;
+  }
+  const extras2=extraExercises(ymd);
+  if(extras2.length){
+    bodyHtml+=`<div class="block-hd" style="--bk:var(--text3)"><span class="block-num"><i class="ti ti-plus" aria-hidden="true"></i></span><span class="block-lbl">Added exercises</span></div>`;
+    bodyHtml+=extras2.map((ex,j)=>exCardHTML([ex,EXB+j],null)).join('');
+  }
+  pane.innerHTML=planBar+bodyHtml+addExSelectHTML(ymd,'w')+`<div class="slabel">Workout notes</div>
   <textarea class="finput" rows="3" placeholder="How did it feel? PRs? Adjustments…" style="width:100%;resize:none" oninput="setDayNote('${ymd}',this.value)">${dayNoteOf(ymd)}</textarea>`;
   initFigures();
 }
@@ -1099,8 +1153,9 @@ const ZZZ_SVG=`<svg class="zzz-svg" viewBox="0 0 140 96" xmlns="http://www.w3.or
   <text x="107" y="16" font-size="8" font-weight="700" fill="var(--accent)" opacity=".5">z</text>
 </svg>`;
 const CELL_MOON=`<svg class="cz" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 12.8A8.5 8.5 0 1 1 11.2 3a6.6 6.6 0 0 0 9.8 9.8z"/></svg>`;
-function exBlockHTML(ymd,ex,ei){
+function exBlockHTML(ymd,ex,ei,tag){
   const isBody=isBodyweight(ex);
+  const tagHtml=tag?`<span class="ex-tag">${tag}</span> `:'';
   const extraBtns=ei>=EXB?` <span class="cd-tag">added</span><button class="ex-del" onclick="removeExtraExercise('${ymd}',${ei-EXB},'c')" title="Remove added exercise" aria-label="Remove added exercise"><i class="ti ti-x"></i></button>`:'';
   const rows=Array.from({length:ex.sets},(_,s)=>{
     const dn=S.sets[kAt(ymd,ei,s,'done')]||false;
@@ -1112,7 +1167,7 @@ function exBlockHTML(ymd,ex,ei){
       <div class="scheck${dn?' done':''}" onclick="toggleSetAt('${ymd}',${ei},${s})" role="checkbox" aria-checked="${dn}" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleSetAt('${ymd}',${ei},${s})}">${dn?'✓':''}</div>
     </div>${easeSegsHTML(S.sets[kAt(ymd,ei,s,'ease')],`easePickAt(this,'${ymd}',${ei},${s})`)}`;
   }).join('');
-  return`<div class="cd-exblock"><div class="cd-exname">${ex.name}<span class="cd-exmeta">${ex.sets}×${ex.reps} · ${ex.meta}</span>${extraBtns}</div>
+  return`<div class="cd-exblock"><div class="cd-exname">${tagHtml}${ex.name}<span class="cd-exmeta">${ex.sets}×${ex.reps} · ${ex.meta}</span>${extraBtns}</div>
     <div class="sets-hd"><span></span><span>Reps</span><span>Weight</span><span></span></div>
     ${rows}</div>`;
 }
@@ -1149,8 +1204,19 @@ function dayDetailHTML(ymd){
     </div>`+addExSelectHTML(ymd,'c');
     return h;
   }
-  h+=D.exercises.map((ex,ei)=>exBlockHTML(ymd,ex,ei)).join('');
-  h+=extras.map((ex,j)=>exBlockHTML(ymd,ex,EXB+j)).join('');
+  // same block grouping as the Workout tab (days without `blocks` render flat)
+  const cblocks=(D.blocks&&D.blocks.length)?D.blocks:[{label:'',note:'',count:D.exercises.length,kind:''}];
+  let ci=0,cn=0;
+  for(const b of cblocks){
+    cn++;
+    const items=[];for(let j=0;j<b.count&&ci<D.exercises.length;j++,ci++)items.push(ci);
+    if(!items.length)continue;
+    if(b.label)h+=blockHeaderHTML(b,cn);
+    const inner=items.map((ei,j)=>exBlockHTML(ymd,D.exercises[ei],ei,b.kind==='superset'?('A'+(j+1)):null)).join('');
+    h+=(b.kind==='superset'||b.kind==='circuit')?`<div class="blockwrap" style="--bk:${BLOCK_COLORS[b.kind]}">${inner}</div>`:inner;
+  }
+  if(extras.length)h+=`<div class="block-hd" style="--bk:var(--text3)"><span class="block-num"><i class="ti ti-plus" aria-hidden="true"></i></span><span class="block-lbl">Added exercises</span></div>`;
+  h+=extras.map((ex,j)=>exBlockHTML(ymd,ex,EXB+j,null)).join('');
   h+=addExSelectHTML(ymd,'c');
   h+=`<div class="slabel">Workout notes</div><textarea class="finput" rows="3" placeholder="How did it feel? PRs? Adjustments…" style="width:100%;resize:none" oninput="setDayNote('${ymd}',this.value)">${dayNoteOf(ymd)}</textarea>`;
   h+=`<button class="cd-done${done?' on':''}" onclick="markDoneAt('${ymd}')">${done?'✓ Workout complete':'Mark workout complete'}</button>`;
